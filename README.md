@@ -8,7 +8,8 @@ This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as Fortify Static Code Analyzer and Fortify Aviator.
+This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as Fortify Static Code Analyzer or Fortify on Demand and
+remediated with Fortify Aviator.
 
 ## Technologies Used
 
@@ -16,10 +17,11 @@ This is a simple Spring Boot microservice application that demonstrates various 
 - Spring Boot 3.2.1
 - Spring Data JPA
 - H2 In-Memory Database
-- Maven
+- Gradle
 
 ## Intentional Security Vulnerabilities
 
+```bash
 This application includes the following intentional security vulnerabilities:
 
 ### 1. SQL Injection
@@ -32,7 +34,7 @@ This application includes the following intentional security vulnerabilities:
 
 ### 3. Command Injection
 - Direct execution of user-supplied commands in `FileService`
-- No input validation or sanitization
+No input validation or sanitization
 
 ### 4. Cross-Site Scripting (XSS)
 - Unescaped user input reflected in HTML responses
@@ -60,19 +62,27 @@ This application includes the following intentional security vulnerabilities:
 ## Building the Application
 
 ```bash
-mvn clean package
+# With a local Gradle installation
+gradle clean build
+
+# Or using the Gradle wrapper (recommended if present)
+./gradlew clean build
 ```
 
 ## Running the Application
 
 ```bash
-mvn spring-boot:run
+# With a local Gradle installation
+gradle bootRun
+
+# Or using the Gradle wrapper (recommended if present)
+./gradlew bootRun
 ```
 
 Or run the jar file:
 
 ```bash
-java -jar target/aviator-demo-1.0.0-SNAPSHOT.jar
+java -jar build/libs/aviator-demo-1.0.0-SNAPSHOT.jar
 ```
 
 The application will start on `http://localhost:8080`
@@ -102,7 +112,7 @@ The application will start on `http://localhost:8080`
 
 ## Testing with Fortify
 
-This application is designed to be scanned with Fortify Static Code Analyzer or Fortify Aviator. The vulnerabilities should be detected during static analysis.
+This application is designed to be scanned with Fortify Static Code Analyzer or Fortify on Demand. The vulnerabilities should be detected during static analysis.
 
 ### Expected Findings
 

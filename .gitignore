@@ -35,6 +35,10 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
+# Gradle
+.gradle/
+build/
+
 # Spring Boot
 .springBeans
 spring-boot-*.log
@@ -53,3 +57,7 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+
+# Fortify
+.fortify
+*.fpr
