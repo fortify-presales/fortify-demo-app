@@ -28,7 +28,7 @@ public class FileController {
             return ResponseEntity.ok(content);
         } catch (IOException e) {
             // Information disclosure - exposing stack trace
-            return ResponseEntity.status(500).body("Error: " + e.getMessage() + "\n" + e.getStackTrace());
+            return ResponseEntity.status(500).body("Error: " + e.getMessage() + "\n" + java.util.Arrays.toString(e.getStackTrace()));
         }
     }
 
