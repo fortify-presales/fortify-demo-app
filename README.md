@@ -1,15 +1,12 @@
 # Fortify Demo App
 
-Example Spring Boot microservice application with intentional security vulnerabilities for demonstration of Fortify/OpenText Application Security testing tools.
-
 ## ⚠️ WARNING
 **This application contains intentional security vulnerabilities and should NEVER be deployed to production or exposed to the internet.**  
 This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as Fortify Static Code Analyzer or Fortify on Demand and
-remediated with Fortify Aviator.
+This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as Fortify Static Code Analyzer or Fortify on Demand and remediated with Fortify Aviator.
 
 ## Technologies Used
 
