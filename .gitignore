@@ -63,3 +63,4 @@ Thumbs.db
 .fortify
 *.fpr
 .otappsec
+aviator_token.txt

@@ -34,5 +34,16 @@ jobs:
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew || true
 
-      - name: Build (assemble)
-        run: ./gradlew clean build --no-daemon
+      - name: Run tests
+        run: ./gradlew test --no-daemon
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            build/test-results/test
+            build/reports/tests/test
+
+      - name: Build (assemble, skip tests)
+        run: ./gradlew clean build -x test --no-daemon

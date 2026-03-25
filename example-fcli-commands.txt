@@ -1,0 +1,29 @@
+fcli fod session login
+fcli fod app ls
+fcli fod app get "fortify-presales/fortify-demo-app"
+fcli fod app ls -q "businessCriticalityType == 'High'"
+fcli fod app ls -q "applicationName.contains('fortify-presales')"
+
+fcli fod release ls
+fcli fod release ls --app "fortify-presales/fortify-demo-app"
+fcli fod app ls -q "applicationName.contains('[KAL]')" -o csv
+$Env:FCLI_DEFAULT_APP="fortify-presales/fortify-demo-app"
+fcli fod release ls
+$Env:FCLI_DEFAULT_RELEASE="main"
+
+fcli fod release get "main"
+fcli fod release get -o "expr=Security Rating:{rating},Critical:{critical},High:{high},Medium:{medium},Low:{low}"
+
+fcli fod issue ls
+Remove-Item Env:FCLI_DEFAULT_APP
+fcli fod issue ls
+fcli fod issue ls -q "severityString == 'Critical'"
+
+scancentral package -bt gradle -bf .\build.gradle -oss
+fcli fod sast-scan start --rel "fortify-presales/fortify-demo-app:klee2_dev" -f fortifypackage.zip --store curScan
+fcli fod sast-scan wait-for ::curScan::
+
+fcli fod action ls
+fcli fod action get ci
+$ENV:FOD_RELEASE="fortify-presales/fortify-demo-app:klee2_dev"
+fcli fod action run ci

@@ -6,9 +6,6 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.security.SecurityScheme;
-import io.swagger.v3.oas.models.Paths;
-import io.swagger.v3.oas.models.Operation;
-import java.util.ArrayList;
 
 @Configuration
 public class OpenApiConfig {

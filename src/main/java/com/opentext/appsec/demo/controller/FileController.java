@@ -10,7 +10,6 @@ import java.io.IOException;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 /**
  * File controller with intentional security vulnerabilities.

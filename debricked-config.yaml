@@ -1,0 +1,5 @@
+overrides:
+  - pURL: "pkg:debricked/fingerprinting"
+    version: "latest" # (optional: if left out, we will determine the version)
+    fileRegexes: # (Rust regex)
+      - "Libs/python/.*"
