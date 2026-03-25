@@ -1,4 +1,4 @@
-package com.fortify.demo.aviator.model;
+package com.opentext.appsec.demo.model;
 
 import jakarta.persistence.*;
 

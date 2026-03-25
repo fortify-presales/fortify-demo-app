@@ -1,4 +1,4 @@
-package com.fortify.demo.aviator.service;
+package com.opentext.appsec.demo.service;
 
 import org.springframework.stereotype.Service;
 

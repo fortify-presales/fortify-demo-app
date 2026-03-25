@@ -1,10 +1,11 @@
-package com.fortify.demo.aviator;
+package com.opentext.appsec.demo;
 
-import com.fortify.demo.aviator.model.User;
-import com.fortify.demo.aviator.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.opentext.appsec.demo.model.User;
+import com.opentext.appsec.demo.repository.UserRepository;
 
 /**
  * Data initializer for demo purposes.

@@ -1,4 +1,4 @@
-# Fortify Aviator Demo
+# Fortify Demo App
 
 Example Spring Boot microservice application with intentional security vulnerabilities for demonstration of Fortify/OpenText Application Security testing tools.
 
@@ -82,7 +82,7 @@ gradle bootRun
 Or run the jar file:
 
 ```bash
-java -jar build/libs/aviator-demo-1.0.0-SNAPSHOT.jar
+java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
 ```
 
 The application will start on `http://localhost:8080`

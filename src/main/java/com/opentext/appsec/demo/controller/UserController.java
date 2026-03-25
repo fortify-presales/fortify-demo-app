@@ -1,10 +1,11 @@
-package com.fortify.demo.aviator.controller;
+package com.opentext.appsec.demo.controller;
 
-import com.fortify.demo.aviator.model.User;
-import com.fortify.demo.aviator.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.opentext.appsec.demo.model.User;
+import com.opentext.appsec.demo.service.UserService;
 
 import java.util.List;
 

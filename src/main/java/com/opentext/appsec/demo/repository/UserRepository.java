@@ -1,8 +1,9 @@
-package com.fortify.demo.aviator.repository;
+package com.opentext.appsec.demo.repository;
 
-import com.fortify.demo.aviator.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.opentext.appsec.demo.model.User;
 
 /**
  * Repository for User entity.

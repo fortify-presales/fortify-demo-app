@@ -1,9 +1,10 @@
-package com.fortify.demo.aviator.service;
+package com.opentext.appsec.demo.service;
 
-import com.fortify.demo.aviator.model.User;
-import com.fortify.demo.aviator.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.opentext.appsec.demo.model.User;
+import com.opentext.appsec.demo.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
