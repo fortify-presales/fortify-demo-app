@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "Fortify Demo App API",
+    "_postman_id": "f3f9e2d2-0000-4f2a-9c9a-000000000000",
+    "description": "Collection for testing the Fortify demo REST API. Uses collection variables and scripts to obtain and reuse a JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth - Login (get JWT)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            { "key": "username", "value": "admin", "type": "text" },
+            { "key": "password", "value": "admin123", "type": "text" }
+          ]
+        },
+        "url": "{{baseUrl}}/api/users/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Login succeeded', function () { pm.expect(pm.response.code).to.equal(200); });",
+              "// Response is plain token string; store it in collection variable 'token'",
+              "var t = pm.response.text();",
+              "if (t) { pm.collectionVariables.set('token', t); pm.test('token saved', function(){ pm.expect(pm.collectionVariables.get('token')).to.not.be.empty; }); } else { pm.test('no token returned', function(){ pm.expect(t).to.not.equal(''); }); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Create User",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"newpass\",\n  \"email\": \"newuser@example.com\",\n  \"role\": \"USER\"\n}"
+        },
+        "url": "{{baseUrl}}/api/users"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Create user returns 200', function(){ pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
+              "try { var json = pm.response.json(); if (json && json.id) { pm.collectionVariables.set('userId', json.id.toString()); } } catch(e) { /* ignore if response not json */ }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Users",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ],
+        "url": "{{baseUrl}}/api/users"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": [ "pm.test('Get users 200', function(){ pm.expect(pm.response.code).to.equal(200); });" ] }
+        }
+      ]
+    },
+    {
+      "name": "Search Users",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/users/search?query=newuser"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Search returns 200', function(){ pm.expect(pm.response.code).to.equal(200); });" ] } } ]
+    },
+    {
+      "name": "Find User by Username",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/users/find?username=newuser"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Find returned 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
+    },
+    {
+      "name": "Get Credentials (no auth required)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/users/debug/credentials"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Credentials endpoint reachable', function(){ pm.expect(pm.response.code).to.equal(200); });" ] } } ]
+    },
+    {
+      "name": "Welcome (reflect input)",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/users/welcome?name=Alice"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Welcome returns 200', function(){ pm.expect(pm.response.code).to.equal(200); });", "pm.test('Body contains name', function(){ pm.expect(pm.response.text()).to.include('Alice'); });" ] } } ]
+    },
+    {
+      "name": "Get User Profile (uses {{userId}})",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/users/{{userId}}/profile?message=Hello"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Profile endpoint status 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
+    }
+  ]
+}

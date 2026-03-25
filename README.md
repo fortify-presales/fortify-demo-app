@@ -154,9 +154,36 @@ Seeded demo users:
 
 - `alice` / `alice456` (see [src/main/java/com/opentext/appsec/demo/DataInitializer.java](src/main/java/com/opentext/appsec/demo/DataInitializer.java#L1-L25))
 
+## Testing with Postman & Newman
+
+You can test the REST API interactively with Postman or run the collection from the command line using `npx newman`.
+
+Prerequisites:
+- Node.js (v14+)
+
+Run the included Postman collection (uses `{{baseUrl}}` collection variable, default `http://localhost:8080`):
+
+```bash
+# run with npx (no global install required)
+npx newman run postman/FortifyDemoApp.postman_collection.json
+```
+
+If you want HTML output (install reporter locally or use npx):
+
+```bash
+npx newman run postman/FortifyDemoApp.postman_collection.json -r cli,html
+# The HTML report will be written to the current folder (newman-run-report.html)
+```
+
+Notes:
+- The `Auth - Login` request uses the seeded `admin` / `admin123` credentials and stores the JWT in a collection variable named `token`.
+- Subsequent requests use the header `Authorization: Bearer {{token}}`.
+- The collection file is at `postman/FortifyDemoApp.postman_collection.json` in this repo.
+
+
 ## Testing with Fortify
 
-This application is designed to be scanned with Fortify Static Code Analyzer or Fortify on Demand. The vulnerabilities should be detected during static analysis.
+This application is designed to be scanned with Fortify Static Code Analyzer or Fortify on Demand. The vulnerabilities should be detected during static analysis. You can use the postman collection in Fortify on Demand or OpenText DAST.
 
 ### Expected Findings
 
