@@ -8,6 +8,10 @@ import com.opentext.appsec.demo.service.FileService;
 
 import java.io.IOException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 /**
  * File controller with intentional security vulnerabilities.
  */
@@ -21,8 +25,9 @@ public class FileController {
     /**
      * Read file with path traversal vulnerability.
      */
+    @Operation(summary = "Read file (path traversal demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @GetMapping("/read")
-    public ResponseEntity<String> readFile(@RequestParam String filename) {
+    public ResponseEntity<String> readFile(@Parameter(description = "Filename to read (unsanitized)") @RequestParam String filename) {
         try {
             // Path Traversal vulnerability - allows reading any file
             String content = fileService.readFile(filename);
@@ -36,8 +41,9 @@ public class FileController {
     /**
      * Write file with path traversal vulnerability.
      */
+    @Operation(summary = "Write file (path traversal demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @PostMapping("/write")
-    public ResponseEntity<String> writeFile(@RequestParam String filename, @RequestBody String content) {
+    public ResponseEntity<String> writeFile(@Parameter(description = "Filename to write (unsanitized)") @RequestParam String filename, @RequestBody String content) {
         try {
             // Path Traversal vulnerability
             fileService.writeFile(filename, content);
@@ -50,8 +56,9 @@ public class FileController {
     /**
      * Execute command with command injection vulnerability.
      */
+    @Operation(summary = "Execute command (command injection demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @GetMapping("/exec")
-    public ResponseEntity<String> executeCommand(@RequestParam String cmd) {
+    public ResponseEntity<String> executeCommand(@Parameter(description = "Command to execute (unsafe)") @RequestParam String cmd) {
         try {
             // Command Injection vulnerability - extremely dangerous
             String output = fileService.executeCommand(cmd);
@@ -64,8 +71,9 @@ public class FileController {
     /**
      * Execute shell command with command injection vulnerability.
      */
+    @Operation(summary = "Execute shell command (command injection demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @GetMapping("/shell")
-    public ResponseEntity<String> executeShellCommand(@RequestParam String input) {
+    public ResponseEntity<String> executeShellCommand(@Parameter(description = "Shell input (unsafe)") @RequestParam String input) {
         try {
             // Command Injection via shell
             String output = fileService.executeShellCommand(input);
@@ -78,8 +86,9 @@ public class FileController {
     /**
      * Read file with absolute path - path traversal vulnerability.
      */
+    @Operation(summary = "Read absolute path (path traversal demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @GetMapping("/readabs")
-    public ResponseEntity<String> readAbsolutePath(@RequestParam String path) {
+    public ResponseEntity<String> readAbsolutePath(@Parameter(description = "Absolute path to read (unsafe)") @RequestParam String path) {
         try {
             // Allows reading any file on the system
             String content = fileService.readAbsolutePath(path);
@@ -92,8 +101,9 @@ public class FileController {
     /**
      * Delete file without validation.
      */
+    @Operation(summary = "Delete file (path traversal demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteFile(@RequestParam String filename) {
+    public ResponseEntity<String> deleteFile(@Parameter(description = "Filename to delete (unsafe)") @RequestParam String filename) {
         // Path Traversal vulnerability - could delete system files
         boolean deleted = fileService.deleteFile(filename);
         if (deleted) {

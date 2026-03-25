@@ -1,10 +1,12 @@
 package com.opentext.appsec.demo.model;
 
 import jakarta.persistence.*;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * User entity with intentional security issues.
  */
+@Schema(description = "User entity (INSECURE: contains demo vulnerabilities)")
 @Entity
 @Table(name = "users")
 public class User {
@@ -13,9 +15,16 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "Username")
     private String username;
+
+    @Schema(description = "Password stored in plain text (INSECURE - demo only)")
     private String password;  // Storing password in plain text - security vulnerability
+
+    @Schema(description = "Email address")
     private String email;
+
+    @Schema(description = "Role")
     private String role;
 
     // Hardcoded API key - security vulnerability (intentional for demo)

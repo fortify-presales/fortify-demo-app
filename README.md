@@ -14,7 +14,7 @@ This is a simple Spring Boot microservice application that demonstrates various 
 - Spring Boot 3.2.1
 - Spring Data JPA
 - H2 In-Memory Database
-- Gradle
+- Gradle 8.7
 
 ## Intentional Security Vulnerabilities
 
@@ -106,6 +106,53 @@ The application will start on `http://localhost:8080`
 
 ### H2 Console
 - `http://localhost:8080/h2-console` - H2 Database Console
+
+## API Documentation
+
+After starting the application (see "Running the Application"), the OpenAPI JSON and Swagger UI are available at:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+Notes:
+- These docs describe the intentionally insecure endpoints in this demo application.
+- If you changed the server port, update the host/port in the URLs above accordingly.
+
+## Using the JWT (INSECURE demo)
+
+The `/api/users/login` endpoint returns a raw JWT token on successful authentication. Use the token in an `Authorization: Bearer <token>` header to call protected endpoints (all `/api/**` except `/api/users/login` and `/api/users/debug/credentials`).
+
+Examples (replace username/password with valid demo credentials):
+
+curl (bash / Linux / macOS):
+
+```bash
+# Obtain token
+TOKEN=$(curl -s -X POST "http://localhost:8080/api/users/login?username=alice&password=alice456")
+echo "Token: $TOKEN"
+
+# Call a protected endpoint
+curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/users"
+```
+
+PowerShell (Windows):
+
+```powershell
+# Obtain token
+$token = Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/users/login?username=alice&password=alice456"
+Write-Host "Token: $token"
+
+# Call a protected endpoint
+Invoke-RestMethod -Uri "http://localhost:8080/api/users" -Headers @{ Authorization = "Bearer $token" }
+```
+
+Notes:
+- The token returned by the demo is intentionally insecure (hard-coded secret and demo claims). Do not reuse in production.
+- If your server port differs, update the URLs accordingly.
+
+Seeded demo users:
+
+- `alice` / `alice456` (see [src/main/java/com/opentext/appsec/demo/DataInitializer.java](src/main/java/com/opentext/appsec/demo/DataInitializer.java#L1-L25))
 
 ## Testing with Fortify
 
