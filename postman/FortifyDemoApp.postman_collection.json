@@ -142,5 +142,78 @@
       },
       "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Profile endpoint status 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
     }
+    ,
+    {
+      "name": "Get All Payments",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/payments"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Get payments 200', function(){ pm.expect(pm.response.code).to.equal(200); });" ] } } ]
+    },
+    {
+      "name": "Get Payments By User",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/payments/user/{{userId}}"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Get payments by user returned 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
+    },
+    {
+      "name": "Create Payment",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": {{userId}},\n  \"type\": \"CREDIT_CARD\",\n  \"cardNumber\": \"4111111111111111\",\n  \"cardExpiry\": \"12/25\",\n  \"cvv\": \"123\",\n  \"paypalEmail\": null,\n  \"status\": \"ACTIVE\"\n}"
+        },
+        "url": "{{baseUrl}}/api/payments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Create payment returns 200/201', function(){ pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
+              "try { var json = pm.response.json(); if (json && json.id) { pm.collectionVariables.set('paymentId', json.id.toString()); pm.test('paymentId saved', function(){ pm.expect(pm.collectionVariables.get('paymentId')).to.not.be.empty; }); } } catch(e) { /* ignore */ }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Payment (uses {{paymentId}})",
+      "request": {
+        "method": "DELETE",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/payments/{{paymentId}}"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Delete payment returned 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
+    },
+    {
+      "name": "Charge Payment",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/x-www-form-urlencoded" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [ { "key": "paymentId", "value": "{{paymentId}}", "type": "text" }, { "key": "amount", "value": "10.00", "type": "text" } ]
+        },
+        "url": "{{baseUrl}}/api/payments/charge"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Charge returned 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });" ] } } ]
+    },
+    {
+      "name": "Debug Raw Cards",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/payments/debug/rawcards"
+      },
+      "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Raw cards reachable', function(){ pm.expect(pm.response.code).to.equal(200); });" ] } } ]
+    }
   ]
 }

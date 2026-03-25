@@ -6,7 +6,7 @@ This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as Fortify Static Code Analyzer or Fortify on Demand and remediated with Fortify Aviator.
+This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
 
 ## Technologies Used
 
@@ -18,7 +18,6 @@ This is a simple Spring Boot microservice application that demonstrates various 
 
 ## Intentional Security Vulnerabilities
 
-```bash
 This application includes the following intentional security vulnerabilities:
 
 ### 1. SQL Injection
@@ -56,29 +55,33 @@ No input validation or sanitization
 - Plain text password comparison
 - Password echoed back in login response
 
+### 9. Insecure Payment Handling
+- Storing full payment card PAN and CVV in plain text (`Payment` entity) - PCI/PII violation (INSECURE, demo only)
+- Debug endpoints that return or log raw card numbers (`/api/payments/debug/rawcards`) — information disclosure
+- No input validation or sanitization on payment inputs (allows malformed/attacker-controlled values)
+- Missing access controls and audit for payment operations (debug endpoints expose sensitive data even with minimal auth)
+- No encryption or tokenization for payment data at rest or in transit beyond default TLS (demo lacks proper PCI controls)
+
 ## Building the Application
 
 ```bash
-# With a local Gradle installation
+# with a local Gradle installation
 gradle clean build
 
-# Or using the Gradle wrapper (recommended if present)
+# or using the Gradle wrapper (recommended if present)
 ./gradlew clean build
 ```
 
 ## Running the Application
 
 ```bash
-# With a local Gradle installation
+# with a local Gradle installation
 gradle bootRun
 
-# Or using the Gradle wrapper (recommended if present)
+# or using the Gradle wrapper (recommended if present)
 ./gradlew bootRun
-```
 
-Or run the jar file:
-
-```bash
+# or run the jar file:
 java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
 ```
 
@@ -104,45 +107,53 @@ The application will start on `http://localhost:8080`
 - `GET /api/files/readabs?path={path}` - Read absolute path (Path Traversal vulnerable)
 - `DELETE /api/files/delete?filename={filename}` - Delete file (Path Traversal vulnerable)
 
+### Payment Endpoints
+- `GET /api/payments` - Get all payments (exposes card data)
+- `GET /api/payments/user/{userId}` - Get payments for a user
+- `POST /api/payments` - Create a payment method (stores card number/CVV in plain text)
+- `DELETE /api/payments/{id}` - Delete a payment method
+- `POST /api/payments/charge?paymentId={id}&amount={amt}` - Simulate charging a payment (debug/demo)
+- `GET /api/payments/debug/rawcards` - Debug endpoint returning raw card numbers (requires auth)
+
 ### H2 Console
 - `http://localhost:8080/h2-console` - H2 Database Console
 
 ## API Documentation
 
-After starting the application (see "Running the Application"), the OpenAPI JSON and Swagger UI are available at:
+After starting the application (see [Running the Application](#running-the-application), the OpenAPI JSON and Swagger UI are available at:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 Notes:
 - These docs describe the intentionally insecure endpoints in this demo application.
-- If you changed the server port, update the host/port in the URLs above accordingly.
+- If you change the server port, update the host/port in the URLs above accordingly.
 
-## Using the JWT (INSECURE demo)
+## Creating the JWT
 
 The `/api/users/login` endpoint returns a raw JWT token on successful authentication. Use the token in an `Authorization: Bearer <token>` header to call protected endpoints (all `/api/**` except `/api/users/login` and `/api/users/debug/credentials`).
 
 Examples (replace username/password with valid demo credentials):
 
-curl (bash / Linux / macOS):
+### curl (bash / Linux / macOS):
 
 ```bash
-# Obtain token
+# obtain token
 TOKEN=$(curl -s -X POST "http://localhost:8080/api/users/login?username=alice&password=alice456")
 echo "Token: $TOKEN"
 
-# Call a protected endpoint
+# call a protected endpoint
 curl -s -H "Authorization: Bearer $TOKEN" "http://localhost:8080/api/users"
 ```
 
-PowerShell (Windows):
+### PowerShell (Windows):
 
 ```powershell
-# Obtain token
+# obtain token
 $token = Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/users/login?username=alice&password=alice456"
 Write-Host "Token: $token"
 
-# Call a protected endpoint
+# call a protected endpoint
 Invoke-RestMethod -Uri "http://localhost:8080/api/users" -Headers @{ Authorization = "Bearer $token" }
 ```
 
@@ -156,7 +167,7 @@ Seeded demo users:
 
 ## Testing with Postman & Newman
 
-You can test the REST API interactively with Postman or run the collection from the command line using `npx newman`.
+You can test the REST API interactively with Postman or run the collection from the command line using `newman`.
 
 Prerequisites:
 - Node.js (v14+)
@@ -178,12 +189,14 @@ npx newman run postman/FortifyDemoApp.postman_collection.json -r cli,html
 Notes:
 - The `Auth - Login` request uses the seeded `admin` / `admin123` credentials and stores the JWT in a collection variable named `token`.
 - Subsequent requests use the header `Authorization: Bearer {{token}}`.
-- The collection file is at `postman/FortifyDemoApp.postman_collection.json` in this repo.
 
+## Testing with OpenText Application Security (Fortify)
 
-## Testing with Fortify
+This application is designed to be scanned with OpenText Application Security's SAST, SCA and DAST engines as well as AI remediation using Aviator.
 
-This application is designed to be scanned with Fortify Static Code Analyzer or Fortify on Demand. The vulnerabilities should be detected during static analysis. You can use the postman collection in Fortify on Demand or OpenText DAST.
+Most of the vulnerabilities described above should be detected during static analysis. 
+
+You can use the postman collection provided to also run a DAST scan.
 
 ### Expected Findings
 
@@ -196,8 +209,10 @@ The security scan should identify:
 - Weak cryptographic algorithms
 - Information disclosure issues
 - Insecure authentication mechanisms
+- Insecure storage and exposure of payment card data (plain-text PAN/CVV) — PCI/PII issues
+- Endpoints that deliberately log or reflect sensitive payment data (information disclosure)
 
 ## License
 
-This project is for demonstration purposes only. See LICENSE file for details.
+This project is for demonstration purposes only. See [LICENSE](.\LICENSE) file for additional details.
 
