@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opentext.appsec.demo.model.Payment;
 import com.opentext.appsec.demo.repository.PaymentRepository;
 import com.opentext.appsec.demo.repository.UserRepository;
+import com.opentext.appsec.demo.repository.TransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -27,6 +28,9 @@ class PaymentControllerTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private TransactionRepository transactionRepository;
+
     private PaymentController controller;
     private MockMvc mockMvc;
     private ObjectMapper objectMapper = new ObjectMapper();
@@ -37,6 +41,7 @@ class PaymentControllerTest {
         controller = new PaymentController();
         ReflectionTestUtils.setField(controller, "paymentRepository", paymentRepository);
         ReflectionTestUtils.setField(controller, "userRepository", userRepository);
+        ReflectionTestUtils.setField(controller, "transactionRepository", transactionRepository);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }

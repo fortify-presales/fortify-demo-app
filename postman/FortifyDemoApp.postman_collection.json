@@ -215,5 +215,50 @@
       },
       "event": [ { "listen": "test", "script": { "exec": [ "pm.test('Raw cards reachable', function(){ pm.expect(pm.response.code).to.equal(200); });" ] } } ]
     }
+    ,
+    {
+      "name": "Create User (anon)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"newuser\",\n  \"password\": \"newpass\",\n  \"email\": \"newuser@example.com\",\n  \"role\": \"USER\"\n}"
+        },
+        "url": "{{baseUrl}}/api/users"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Create user (anon) returns 200/201', function(){ pm.expect(pm.response.code).to.be.oneOf([200,201]); });",
+              "try { var json = pm.response.json(); pm.test('username present', function(){ pm.expect(json.username).to.eql('newuser'); }); if (json && json.id) { pm.collectionVariables.set('userId', json.id.toString()); } } catch(e) { }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Transactions By Payment",
+      "request": {
+        "method": "GET",
+        "header": [ { "key": "Authorization", "value": "Bearer {{token}}" } ],
+        "url": "{{baseUrl}}/api/transactions/payment/{{paymentId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Get transactions returned 200 or 404', function(){ pm.expect(pm.response.code).to.be.oneOf([200,404]); });",
+              "try { var json = pm.response.json(); pm.test('Response is array when 200', function(){ if (pm.response.code===200) pm.expect(Array.isArray(json)).to.be.true; }); } catch(e) { }"
+            ]
+          }
+        }
+      ]
+    }
   ]
 }

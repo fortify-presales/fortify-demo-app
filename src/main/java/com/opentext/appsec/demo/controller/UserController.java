@@ -1,6 +1,8 @@
 package com.opentext.appsec.demo.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,6 +10,7 @@ import com.opentext.appsec.demo.model.User;
 import com.opentext.appsec.demo.service.UserService;
 
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +21,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    private static final Log logger = LogFactory.getLog(UserController.class);
 
     @Autowired
     private UserService userService;
@@ -63,12 +68,47 @@ public class UserController {
      * Stores password in plain text.
      */
         @Operation(summary = "Create a new user (stores plaintext password - INSECURE)",
-            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "User object to create"),
-            security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        // No password hashing - stores plain text password
-        return userService.createUser(user);
+                requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "User object to create"))
+        @PostMapping
+        public User createUser(@RequestBody(required = false) String rawBody) {
+            try {
+                logger.info("createUser rawBody: " + rawBody);
+                if (rawBody == null || rawBody.isBlank()) {
+                    throw new IllegalArgumentException("Empty request body");
+                }
+                com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.Map<String, Object> body = om.readValue(rawBody, java.util.Map.class);
+                User user = new User();
+                Object u = body.get("username");
+                Object p = body.get("password");
+                Object e = body.get("email");
+                Object r = body.get("role");
+                if (u != null) user.setUsername(u.toString());
+                if (p != null) user.setPassword(p.toString());
+                if (e != null) user.setEmail(e.toString());
+                user.setRole(r != null ? r.toString() : "USER");
+                return userService.createUser(user);
+            } catch (Exception ex) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid request: " + ex.getMessage(), ex);
+            }
+        }
+
+    /**
+     * Update an existing user (demo only).
+     */
+    @Operation(summary = "Update user (demo)")
+    @PutMapping("/{id}")
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updated) {
+        User existing = userService.getAllUsers().stream().filter(u -> u.getId().equals(id)).findFirst().orElse(null);
+        if (existing == null) return ResponseEntity.notFound().build();
+        // INSECURE (demo): allow updating email and password directly
+        existing.setEmail(updated.getEmail());
+        existing.setPassword(updated.getPassword());
+        existing.setRole(updated.getRole());
+        // Do not change username in this demo
+        // Save via userService
+        userService.createUser(existing);
+        return ResponseEntity.ok(existing);
     }
 
     /**

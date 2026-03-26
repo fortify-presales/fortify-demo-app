@@ -37,3 +37,32 @@ tasks.withType(JavaCompile) {
 test {
     useJUnitPlatform()
 }
+
+// Frontend build/copy tasks for embedded SPA (React + Vite)
+tasks.register('npmInstall') {
+    doLast {
+        exec {
+            workingDir "${projectDir}/frontend"
+            commandLine 'npm', 'ci'
+        }
+    }
+}
+
+tasks.register('buildFrontend') {
+    dependsOn 'npmInstall'
+    doLast {
+        exec {
+            workingDir "${projectDir}/frontend"
+            commandLine 'npm', 'run', 'build'
+        }
+    }
+}
+
+tasks.register('copyFrontend', Copy) {
+    dependsOn 'buildFrontend'
+    from file('frontend/dist')
+    into file('src/main/resources/static')
+}
+
+// Ensure the frontend is copied as part of a Gradle build
+build.dependsOn 'copyFrontend'

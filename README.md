@@ -215,3 +215,62 @@ The security scan should identify:
 ## License
 
 This project is for demonstration purposes only. See [LICENSE](./LICENSE) file for additional details.
+
+## Frontend Development & Embedding
+
+This project includes a lightweight React + Vite frontend in the `frontend/` folder. The frontend is a small SPA used for demoing authentication and payment views against the backend API.
+
+For frontend-specific developer notes, see the frontend README: [frontend/README.md](frontend/README.md)
+
+Prerequisites:
+- Node.js (v16+ recommended) and `npm` installed for frontend development.
+- Java 17 and Gradle (or the included Gradle wrapper) for running the backend.
+
+Dev server (fast HMR):
+
+```bash
+# Start the Spring Boot backend (required for API proxying)
+./gradlew bootRun
+
+# In a separate terminal, start the Vite dev server
+cd frontend
+npm install
+npm run dev
+```
+
+Notes:
+- The dev server is configured to proxy `/api` requests to `http://localhost:8080` (see `frontend/vite.config.js`). If your backend runs on a different port, update that proxy setting.
+- If you see a Vite proxy error like `ECONNREFUSED` while calling `/api`, ensure the backend is running and reachable at the proxy target.
+
+Build and embed into Spring Boot (production/demo packaging):
+
+```bash
+cd frontend
+npm install
+npm run build
+
+# Option A: use the Gradle task to build and copy assets into Spring Boot
+./gradlew copyFrontend
+
+# Option B: manually copy the build output into Spring Boot static resources
+# (PowerShell)
+Copy-Item -Path frontend\\dist\\* -Destination src\\main\\resources\\static -Recurse
+# (bash)
+cp -r frontend/dist/* src/main/resources/static/
+
+# Then run the backend which serves the SPA at http://localhost:8080/
+./gradlew bootRun
+```
+
+Authentication & sample credentials
+- The SPA uses the demo JWT flow implemented by the backend. The login endpoint is `POST /api/users/login?username={username}&password={password}` and returns a raw JWT on success.
+- Seeded demo users are listed earlier in this README. Example: `alice` / `alice456`.
+
+Security notes (demo only):
+- This is an intentionally insecure demo. The frontend stores the JWT in `localStorage` for simplicity — this is NOT recommended for production due to XSS risks. Consider an HttpOnly cookie with proper CSRF protections in real apps.
+- Payment data in this demo is stored in plain text on the backend (PAN/CVV). Do not model this in production — use a PCI-compliant payment gateway and tokenization.
+
+Troubleshooting
+- If `npm install` fails due to dependency conflicts, update `frontend/package.json` or run `npm install --legacy-peer-deps`. The repository includes compatible plugin versions.
+- If `./gradlew copyFrontend` fails, run the frontend build manually and copy `frontend/dist` into `src/main/resources/static` as a fallback.
+
