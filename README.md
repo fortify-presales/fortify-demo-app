@@ -120,7 +120,7 @@ The application will start on `http://localhost:8080`
 
 ## API Documentation
 
-After starting the application (see [Running the Application](#running-the-application), the OpenAPI JSON and Swagger UI are available at:
+After starting the application (see [Running the Application](#running-the-application)), the OpenAPI JSON and Swagger UI are available at:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
@@ -214,5 +214,4 @@ The security scan should identify:
 
 ## License
 
-This project is for demonstration purposes only. See [LICENSE](.\LICENSE) file for additional details.
-
+This project is for demonstration purposes only. See [LICENSE](./LICENSE) file for additional details.
