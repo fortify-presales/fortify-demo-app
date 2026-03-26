@@ -26,26 +26,26 @@ export default function Register({ onRegister, onCancel }) {
   }
 
   return (
-    <div style={{ maxWidth: 420 }}>
-      <h2>Register</h2>
+    <div className="card max-w-md">
+      <h2 className="text-2xl font-semibold mb-4">Register</h2>
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} />
+        <div className="mb-3">
+          <label className="label">Username</label>
+          <input className="input" value={username} onChange={(e) => setUsername(e.target.value)} />
         </div>
-        <div>
-          <label>Email</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} />
+        <div className="mb-3">
+          <label className="label">Email</label>
+          <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
-        <div>
-          <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <div className="mb-3">
+          <label className="label">Password</label>
+          <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <div style={{ marginTop: 10 }}>
-          <button type="submit" disabled={loading}>{loading ? 'Registering…' : 'Register'}</button>
-          <button type="button" onClick={onCancel} style={{ marginLeft: 8 }}>Cancel</button>
+        <div className="mt-4 flex items-center gap-3">
+          <button className="px-4 py-2 bg-green-600 text-white rounded" type="submit" disabled={loading}>{loading ? 'Registering…' : 'Register'}</button>
+          <button className="px-3 py-2 bg-gray-200 rounded" type="button" onClick={onCancel}>Cancel</button>
         </div>
-        {error && <div style={{ color: 'red' }}>{error}</div>}
+        {error && <div className="mt-3 text-red-600">{error}</div>}
       </form>
     </div>
   )

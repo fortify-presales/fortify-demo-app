@@ -8,6 +8,11 @@ npm install
 npm run dev
 ```
 
+Notes about Tailwind
+-
+- This frontend now uses Tailwind CSS for styling. Tailwind and PostCSS are included as devDependencies in `package.json`.
+- After running `npm install`, the Vite dev server will process Tailwind directives in `src/index.css` automatically.
+
 Build (for embedding into Spring Boot):
 
 ```bash

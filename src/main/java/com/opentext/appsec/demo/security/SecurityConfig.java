@@ -13,14 +13,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService blacklistService;
 
-    public SecurityConfig(JwtUtil jwtUtil) {
+    public SecurityConfig(JwtUtil jwtUtil, TokenBlacklistService blacklistService) {
         this.jwtUtil = jwtUtil;
+        this.blacklistService = blacklistService;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtUtil);
+        JwtAuthenticationFilter jwtFilter = new JwtAuthenticationFilter(jwtUtil, blacklistService);
 
         http
                 .csrf(csrf -> csrf.disable())

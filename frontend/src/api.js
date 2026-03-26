@@ -77,3 +77,11 @@ export async function getWelcome(name, token) {
   if (!res.ok) throw new Error(await res.text())
   return res.text()
 }
+
+export async function getAllUsers(token) {
+  return request(`/users`, 'GET', null, token)
+}
+
+export async function logout(token) {
+  return request(`/users/logout`, 'POST', null, token)
+}

@@ -196,7 +196,26 @@ This application is designed to be scanned with OpenText Application Security's 
 
 Most of the vulnerabilities described above should be detected during static analysis. 
 
-You can use the postman collection provided to also run a DAST scan.
+You can use the [Postman collection](postman/FortifyDemoApp.postman_collection.json) provided to run a DAST API scan.
+
+You can use the [Login macro](fortify/FortifyDemoApp-Dev-Login.webmacro) provided to run a DAST Website scan.
+
+Note: the Login macro above sets the Logout condition URL to the custom logout endpoint used by this app:
+
+	"[URI]/api/users/logout"
+
+This tells the scanner the application logout location so it can detect end-of-session events.
+To test the application running with vite and Fortify Connect Docker container, the following
+needs to be added to `vite.config.js`:
+```
+  server: {
+    port: 5173,
+    allowedHosts: [
+      'localhost',
+      'host.docker.internal'
+    ]
+  }
+``
 
 ### Expected Findings
 

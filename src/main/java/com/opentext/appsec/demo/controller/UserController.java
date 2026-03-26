@@ -30,6 +30,9 @@ public class UserController {
     @Autowired
     private com.opentext.appsec.demo.security.JwtUtil jwtUtil;
 
+    @Autowired
+    private com.opentext.appsec.demo.security.TokenBlacklistService blacklistService;
+
     /**
      * Get all users.
      */
@@ -139,13 +142,52 @@ public class UserController {
     }
 
     /**
+     * Logout: blacklist the provided token until its expiry.
+     */
+    @Operation(summary = "Logout (blacklist token)")
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            try {
+                long exp = jwtUtil.getExpirationMillis(token);
+                // Blacklist token until its expiry
+                blacklistService.blacklistToken(token, exp);
+                return ResponseEntity.ok("Logged out") ;
+            } catch (Exception ex) {
+                logger.warn("Failed to parse token during logout", ex);
+                return ResponseEntity.status(400).body("Invalid token") ;
+            }
+        }
+        return ResponseEntity.badRequest().body("Missing Authorization header") ;
+    }
+
+    /**
      * Reflect user input without sanitization - XSS vulnerability.
      */
     @Operation(summary = "Welcome page (reflects input - XSS demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
     @GetMapping("/welcome")
     public String welcome(@Parameter(description = "Name to welcome (not escaped)") @RequestParam String name) {
         // Cross-Site Scripting (XSS) vulnerability - no HTML escaping
-        return "<html><body><h1>Welcome " + name + "!</h1></body></html>";
+        // Return a longer, more interesting welcome HTML for the demo
+        String html = "<html><body>" +
+                "<div style=\"font-family:Arial,Helvetica,sans-serif;max-width:800px;margin:0 auto;\">" +
+                "<h1 style=\"color:#1f2937;\">Welcome, " + name + "!</h1>" +
+                "<p style=\"color:#374151;\">Glad to see you back. Here's a quick summary of your demo account and recent activity — useful for demoing dashboards and data visualizations.</p>" +
+                "<ul style=\"color:#374151;\">" +
+                "<li><strong>Payments:</strong> You have sample payment methods (credit cards and PayPal) seeded for demo purposes.</li>" +
+                "<li><strong>Transactions:</strong> Example transactions are available. Use the Payments view to inspect or simulate charges.</li>" +
+                "<li><strong>Security note:</strong> This demo intentionally stores sensitive fields in plain text — do not replicate this in production.</li>" +
+                "</ul>" +
+                "<h3 style=\"color:#111827;margin-top:18px;\">Tips & next steps</h3>" +
+                "<ol style=\"color:#374151;\">" +
+                "<li>Try creating a new user via the Register button and then add a payment method.</li>" +
+                "<li>Use the debug endpoints to explore seeded data (this app intentionally exposes sensitive data for scanning exercises).</li>" +
+                "<li>Check the Payments page to simulate charges and then view the transactions list.</li>" +
+                "</ol>" +
+                "<p style=\"color:#6b7280; font-size:0.9em; margin-top:12px;\">(This welcome message is intentionally reflective and not escaped to demonstrate XSS findings during security scans.)</p>" +
+                "</div></body></html>";
+        return html;
     }
 
     /**
