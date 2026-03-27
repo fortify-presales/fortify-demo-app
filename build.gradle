@@ -71,3 +71,9 @@ tasks.register('copyFrontend', Copy) {
 
 // Ensure the frontend is copied as part of a Gradle build
 build.dependsOn 'copyFrontend'
+
+// Declare explicit dependency so processResources runs after copyFrontend
+// This avoids an implicit dependency warning/failure on CI (Gradle validation)
+tasks.named('processResources') {
+    dependsOn 'copyFrontend'
+}
