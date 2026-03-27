@@ -44,36 +44,41 @@ test {
 }
 
 // Frontend build/copy tasks for embedded SPA (React + Vite)
-tasks.register('npmInstall') {
-    doLast {
-        exec {
-            workingDir "${projectDir}/frontend"
-            commandLine npmCmd, 'ci'
+if (!project.hasProperty('skipFrontend')) {
+    // Frontend build/copy tasks for embedded SPA (React + Vite)
+    tasks.register('npmInstall') {
+        doLast {
+            exec {
+                workingDir "${projectDir}/frontend"
+                commandLine npmCmd, 'ci'
+            }
         }
     }
-}
 
-tasks.register('buildFrontend') {
-    dependsOn 'npmInstall'
-    doLast {
-        exec {
-            workingDir "${projectDir}/frontend"
-            commandLine npmCmd, 'run', 'build'
+    tasks.register('buildFrontend') {
+        dependsOn 'npmInstall'
+        doLast {
+            exec {
+                workingDir "${projectDir}/frontend"
+                commandLine npmCmd, 'run', 'build'
+            }
         }
     }
-}
 
-tasks.register('copyFrontend', Copy) {
-    dependsOn 'buildFrontend'
-    from file('frontend/dist')
-    into file('src/main/resources/static')
-}
+    tasks.register('copyFrontend', Copy) {
+        dependsOn 'buildFrontend'
+        from file('frontend/dist')
+        into file('src/main/resources/static')
+    }
 
-// Ensure the frontend is copied as part of a Gradle build
-build.dependsOn 'copyFrontend'
+    // Ensure the frontend is copied as part of a Gradle build
+    build.dependsOn 'copyFrontend'
 
-// Declare explicit dependency so processResources runs after copyFrontend
-// This avoids an implicit dependency warning/failure on CI (Gradle validation)
-tasks.named('processResources') {
-    dependsOn 'copyFrontend'
+    // Declare explicit dependency so processResources runs after copyFrontend
+    // This avoids an implicit dependency warning/failure on CI (Gradle validation)
+    tasks.named('processResources') {
+        dependsOn 'copyFrontend'
+    }
+} else {
+    logger.lifecycle('Skipping frontend build/copy because -PskipFrontend is set')
 }

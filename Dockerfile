@@ -20,7 +20,7 @@ COPY --from=frontend /frontend/dist src/main/resources/static
 
 # Run the Gradle build (skip tests to speed up container builds)
 # Pick the largest JAR produced (to prefer the fat/boot jar) and copy it
-RUN gradle bootJar --no-daemon -x test && cp $(ls -S build/libs/*.jar | head -n1) /tmp/app.jar
+RUN gradle bootJar --no-daemon -x test -PskipFrontend=true && cp $(ls -S build/libs/*.jar | head -n1) /tmp/app.jar
 
 # Runtime stage: use a slim Java runtime image
 FROM eclipse-temurin:17-jre-jammy
