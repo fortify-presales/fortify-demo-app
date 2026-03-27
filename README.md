@@ -62,7 +62,7 @@ No input validation or sanitization
 - Missing access controls and audit for payment operations (debug endpoints expose sensitive data even with minimal auth)
 - No encryption or tokenization for payment data at rest or in transit beyond default TLS (demo lacks proper PCI controls)
 
-## Building the Application
+## Building the Backend API
 
 ```bash
 # with a local Gradle installation
@@ -72,7 +72,7 @@ gradle clean build
 ./gradlew clean build
 ```
 
-## Running the Application
+## Running the Backend API
 
 ```bash
 # with a local Gradle installation
@@ -86,6 +86,11 @@ java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
 ```
 
 The application will start on `http://localhost:8080`
+
+## Building the Frontend SPA
+
+This project includes a lightweight React + Vite frontend in the `frontend/` folder. 
+For frontend-specific developer notes, see the frontend README: [frontend/README.md](frontend/README.md)
 
 ## API Endpoints
 
@@ -196,7 +201,26 @@ This application is designed to be scanned with OpenText Application Security's 
 
 Most of the vulnerabilities described above should be detected during static analysis. 
 
-You can use the postman collection provided to also run a DAST scan.
+You can use the [Postman collection](postman/FortifyDemoApp.postman_collection.json) provided to run a DAST API scan.
+
+You can use the [Login macro](fortify/FortifyDemoApp-Dev-Login.webmacro) provided to run a DAST Website scan.
+
+Note: the Login macro above sets the Logout condition URL to the custom logout endpoint used by this app:
+```
+[URI]/api/users/logout
+```
+This tells the scanner the application logout location so it can detect end-of-session events.
+To test the application running with vite and Fortify Connect Docker container, the following
+needs to be added to `vite.config.js`:
+```
+  server: {
+    port: 5173,
+    allowedHosts: [
+      'localhost',
+      'host.docker.internal'
+    ]
+  }
+```
 
 ### Expected Findings
 

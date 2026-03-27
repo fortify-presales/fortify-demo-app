@@ -14,8 +14,22 @@ repositories {
     mavenCentral()
 }
 
+// If the user invoked the `test` task, default to skipping frontend work
+def requestedTasks = gradle.startParameter.taskNames
+if (requestedTasks.any { it == 'test' || it == 'testClasses' || it == 'check' }) {
+    if (!project.hasProperty('skipFrontend')) {
+        ext.set('skipFrontend', 'true')
+        logger.lifecycle('Auto-setting skipFrontend=true because test task was requested')
+    }
+}
+
+// Use `npm.cmd` on Windows so Gradle can start the process correctly
+def npmCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Spring Boot Actuator (INSECURE: exposing all actuator endpoints configured in properties)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // OpenAPI / Swagger UI for documenting the REST API
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
@@ -36,4 +50,44 @@ tasks.withType(JavaCompile) {
 // Ensure tests use JUnit Platform
 test {
     useJUnitPlatform()
+}
+
+// Frontend build/copy tasks for embedded SPA (React + Vite)
+if (!project.hasProperty('skipFrontend')) {
+    // Frontend build/copy tasks for embedded SPA (React + Vite)
+    tasks.register('npmInstall') {
+        doLast {
+            exec {
+                workingDir "${projectDir}/frontend"
+                commandLine npmCmd, 'ci'
+            }
+        }
+    }
+
+    tasks.register('buildFrontend') {
+        dependsOn 'npmInstall'
+        doLast {
+            exec {
+                workingDir "${projectDir}/frontend"
+                commandLine npmCmd, 'run', 'build'
+            }
+        }
+    }
+
+    tasks.register('copyFrontend', Copy) {
+        dependsOn 'buildFrontend'
+        from file('frontend/dist')
+        into file('src/main/resources/static')
+    }
+
+    // Ensure the frontend is copied as part of a Gradle build
+    build.dependsOn 'copyFrontend'
+
+    // Declare explicit dependency so processResources runs after copyFrontend
+    // This avoids an implicit dependency warning/failure on CI (Gradle validation)
+    tasks.named('processResources') {
+        dependsOn 'copyFrontend'
+    }
+} else {
+    logger.lifecycle('Skipping frontend build/copy because -PskipFrontend is set')
 }

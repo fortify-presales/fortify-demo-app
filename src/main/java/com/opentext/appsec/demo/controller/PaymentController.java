@@ -7,10 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.opentext.appsec.demo.model.Payment;
+import com.opentext.appsec.demo.model.Transaction;
 import com.opentext.appsec.demo.repository.PaymentRepository;
 import com.opentext.appsec.demo.repository.UserRepository;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +28,9 @@ public class PaymentController {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private com.opentext.appsec.demo.repository.TransactionRepository transactionRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -55,6 +60,18 @@ public class PaymentController {
     @Operation(summary = "Create a payment method (INSECURE: stores card data in plain text)")
     @PostMapping
     public Payment createPayment(@RequestBody Payment payment) {
+        // Normalize and set defaults so client-created payments look like sample data
+        if (payment.getType() != null) {
+            String t = payment.getType().toUpperCase();
+            if (t.equals("CARD") || t.equals("CREDIT_CARD")) payment.setType("CREDIT_CARD");
+            else if (t.equals("PAYPAL")) payment.setType("PAYPAL");
+            else payment.setType(t);
+        } else {
+            payment.setType("CREDIT_CARD");
+        }
+        if (payment.getStatus() == null) payment.setStatus("ACTIVE");
+        if (payment.getCreatedAt() == null) payment.setCreatedAt(LocalDateTime.now());
+
         // INSECURE (intentional): storing payment data including card details in plain text for demo.
         return paymentRepository.save(payment);
     }
@@ -86,6 +103,11 @@ public class PaymentController {
         // INSECURE (intentional): logging sensitive card data and simulating a charge
         String debug = "Charging payment id=" + paymentId + " card=" + p.getCardNumber() + " amount=" + amount;
         logger.debug(debug);
+
+        // Persist a simulated transaction record so transactions can be listed
+        Transaction tx = new Transaction(paymentId, amount, "APPROVED");
+        transactionRepository.save(tx);
+
         return ResponseEntity.ok(debug);
     }
 

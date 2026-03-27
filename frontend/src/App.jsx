@@ -1,0 +1,57 @@
+import React, { useState } from 'react'
+import Login from './components/Login'
+import Dashboard from './components/Dashboard'
+import Profile from './components/Profile'
+import Payments from './components/Payments'
+import Users from './components/Users'
+import SideNav from './components/SideNav'
+import { logout as apiLogout } from './api'
+
+export default function App() {
+  const [token, setToken] = useState(localStorage.getItem('token') || null)
+  const [view, setView] = useState('dashboard')
+  const [paymentsAction, setPaymentsAction] = useState(null)
+
+  const handleLogin = (t) => {
+    localStorage.setItem('token', t)
+    setToken(t)
+  }
+
+  const handleLogout = () => {
+    const t = localStorage.getItem('token')
+    // Call backend logout to blacklist the token (demo)
+    if (t) {
+      apiLogout(t).catch(() => {
+        // ignore errors - still clear client state
+      }).finally(() => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('username')
+        setToken(null)
+      })
+    } else {
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      setToken(null)
+    }
+  }
+
+  if (!token) return (
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <Login onLogin={handleLogin} />
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="flex h-screen">
+      <SideNav view={view} setView={setView} onLogout={handleLogout} />
+      <div className="flex-1 overflow-auto p-6 bg-gray-50">
+        {view === 'dashboard' && <Dashboard token={token} setView={setView} setPaymentsAction={setPaymentsAction} />}
+        {view === 'payments' && <Payments token={token} onLogout={handleLogout} paymentsAction={paymentsAction} clearPaymentsAction={() => setPaymentsAction(null)} />}
+        {view === 'profile' && <Profile token={token} onLogout={handleLogout} />}
+        {view === 'users' && <Users token={token} />}
+      </div>
+    </div>
+  )
+}
