@@ -14,8 +14,13 @@ repositories {
     mavenCentral()
 }
 
+// Use `npm.cmd` on Windows so Gradle can start the process correctly
+def npmCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Spring Boot Actuator (INSECURE: exposing all actuator endpoints configured in properties)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     // OpenAPI / Swagger UI for documenting the REST API
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
@@ -43,7 +48,7 @@ tasks.register('npmInstall') {
     doLast {
         exec {
             workingDir "${projectDir}/frontend"
-            commandLine 'npm', 'ci'
+            commandLine npmCmd, 'ci'
         }
     }
 }
@@ -53,7 +58,7 @@ tasks.register('buildFrontend') {
     doLast {
         exec {
             workingDir "${projectDir}/frontend"
-            commandLine 'npm', 'run', 'build'
+            commandLine npmCmd, 'run', 'build'
         }
     }
 }

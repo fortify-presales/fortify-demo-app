@@ -39,7 +39,8 @@ buildNumber.properties
 .gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
-
+# generated from front end build, not needed in source control
+src/main/resources/static/
 # Spring Boot
 .springBeans
 spring-boot-*.log
