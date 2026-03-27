@@ -14,6 +14,15 @@ repositories {
     mavenCentral()
 }
 
+// If the user invoked the `test` task, default to skipping frontend work
+def requestedTasks = gradle.startParameter.taskNames
+if (requestedTasks.any { it == 'test' || it == 'testClasses' || it == 'check' }) {
+    if (!project.hasProperty('skipFrontend')) {
+        ext.set('skipFrontend', 'true')
+        logger.lifecycle('Auto-setting skipFrontend=true because test task was requested')
+    }
+}
+
 // Use `npm.cmd` on Windows so Gradle can start the process correctly
 def npmCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
 

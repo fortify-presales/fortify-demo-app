@@ -19,6 +19,8 @@ import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.mockito.ArgumentCaptor;
 
 class PaymentControllerTest {
 
@@ -95,7 +97,15 @@ class PaymentControllerTest {
         when(paymentRepository.findById(10L)).thenReturn(Optional.of(p));
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/payments/charge").param("paymentId", "10").param("amount", "12.34"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Charging payment id=10")));
+            .andExpect(status().isOk())
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Charging payment id=10")));
+
+        // Verify a Transaction was saved with the expected paymentId and amount
+        ArgumentCaptor<com.opentext.appsec.demo.model.Transaction> captor = ArgumentCaptor.forClass(com.opentext.appsec.demo.model.Transaction.class);
+        verify(transactionRepository, times(1)).save(captor.capture());
+        com.opentext.appsec.demo.model.Transaction saved = captor.getValue();
+        assertNotNull(saved, "Saved transaction should not be null");
+        assertEquals(p.getId(), saved.getPaymentId(), "Transaction should be associated with charged payment id");
+        assertEquals(12.34, saved.getAmount(), 0.0001, "Transaction amount should match charged amount");
     }
 }

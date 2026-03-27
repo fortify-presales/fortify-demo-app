@@ -30,16 +30,16 @@ export default function Payments({ token, paymentsAction, clearPaymentsAction })
       }
       if (paymentsAction === 'simulate') {
         // simulate a charge on the first payment if available
-        if (payments.length > 0) {
+          if (payments.length > 0) {
           const first = payments[0]
-          await handleCharge(first.id, 100)
+          await handleCharge(first.id, 1.00)
         } else {
           // try reload payments then simulate
           const stored = localStorage.getItem('username') || 'user'
           const u = await getUserByUsername(stored, token)
           const ps = await getPaymentsForUser(u.id, token)
           setPayments(ps)
-          if (ps.length > 0) await handleCharge(ps[0].id, 100)
+          if (ps.length > 0) await handleCharge(ps[0].id, 1.00)
         }
         if (clearPaymentsAction) clearPaymentsAction()
       }
@@ -98,12 +98,12 @@ export default function Payments({ token, paymentsAction, clearPaymentsAction })
         <h3 className="text-lg font-semibold mb-3">Transactions</h3>
         {selected ? (
           <div className="card">
-            <div className="mb-3">
-              <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => handleCharge(selected, 100)}>Charge $1.00</button>
+              <div className="mb-3">
+              <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => handleCharge(selected, 1.00)}>Charge $1.00</button>
             </div>
             <ul className="divide-y divide-gray-100">
               {transactions.map(t => (
-                <li key={t.id} className="py-2">{t.amount} — {t.status} — {t.createdAt}</li>
+                <li key={t.id} className="py-2">${Number(t.amount).toFixed(2)} — {t.status} — {t.createdAt}</li>
               ))}
             </ul>
           </div>

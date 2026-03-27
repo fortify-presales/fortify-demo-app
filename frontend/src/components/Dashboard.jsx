@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { getWelcome, getPaymentsForUser, getTransactionsForPayment } from '../api'
 
-export default function Dashboard({ token, setView }) {
+export default function Dashboard({ token, setView, setPaymentsAction }) {
   const [welcomeHtml, setWelcomeHtml] = useState(null)
   const [metrics, setMetrics] = useState({ payments: 0, transactions: 0, totalCharged: 0 })
   const [recent, setRecent] = useState([])
@@ -186,8 +186,8 @@ export default function Dashboard({ token, setView }) {
       <div className="card">
         <h3 className="font-semibold mb-2">Quick Actions</h3>
         <div className="flex flex-col gap-2">
-          <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => setView ? setView('payments') : null}>Add Payment Method</button>
-          <button className="px-3 py-2 bg-amber-500 text-white rounded" onClick={() => { if (setView) { setView('payments'); alert('Demo: select a card and press Charge to simulate a transaction.'); } else { alert('Demo: simulate charge'); } }}>Simulate Charge</button>
+          <button className="px-3 py-2 bg-blue-600 text-white rounded" onClick={() => { if (setPaymentsAction) setPaymentsAction('add'); if (setView) setView('payments'); }}>Add Payment Method</button>
+          <button className="px-3 py-2 bg-amber-500 text-white rounded" onClick={() => { if (setPaymentsAction) setPaymentsAction('simulate'); if (setView) { setView('payments'); alert('Demo: select a card and press Charge to simulate a transaction.'); } else { alert('Demo: simulate charge'); } }}>Simulate Charge</button>
           <button className="px-3 py-2 bg-gray-200 rounded">View Account Settings</button>
         </div>
       </div>

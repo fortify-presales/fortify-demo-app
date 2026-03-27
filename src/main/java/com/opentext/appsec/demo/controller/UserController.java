@@ -73,27 +73,15 @@ public class UserController {
         @Operation(summary = "Create a new user (stores plaintext password - INSECURE)",
                 requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "User object to create"))
         @PostMapping
-        public User createUser(@RequestBody(required = false) String rawBody) {
-            try {
-                logger.info("createUser rawBody: " + rawBody);
-                if (rawBody == null || rawBody.isBlank()) {
-                    throw new IllegalArgumentException("Empty request body");
-                }
-                com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
-                java.util.Map<String, Object> body = om.readValue(rawBody, java.util.Map.class);
-                User user = new User();
-                Object u = body.get("username");
-                Object p = body.get("password");
-                Object e = body.get("email");
-                Object r = body.get("role");
-                if (u != null) user.setUsername(u.toString());
-                if (p != null) user.setPassword(p.toString());
-                if (e != null) user.setEmail(e.toString());
-                user.setRole(r != null ? r.toString() : "USER");
-                return userService.createUser(user);
-            } catch (Exception ex) {
-                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Invalid request: " + ex.getMessage(), ex);
+        public User createUser(@RequestBody(required = false) User user) {
+            if (user == null) {
+                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Empty request body");
             }
+
+            // INSECURE (intentional): stores user passwords in plain text for demo purposes.
+            // Secure alternative: hash+salt passwords (e.g., BCrypt) before persisting and never log raw passwords.
+            if (user.getRole() == null) user.setRole("USER");
+            return userService.createUser(user);
         }
 
     /**
