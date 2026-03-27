@@ -10,8 +10,6 @@ import com.opentext.appsec.demo.model.User;
 import com.opentext.appsec.demo.service.UserService;
 
 import java.util.List;
-import java.util.Map;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 

@@ -6,8 +6,8 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="12" fill="url(#g)" />
-  <!-- Stylized F glyph -->
-  <path d="M18 14h20v6H26v6h10v6H26v10H18V14z" fill="#fff" transform="translate(0,0)"/>
-  <!-- Small 'DA' under the F (slightly larger) -->
-  <text x="50%" y="48" font-family="Inter, system-ui, Arial" font-size="9" fill="#ffffff" font-weight="700" text-anchor="middle">DA</text>
+  <!-- Stylized F glyph (slightly taller to align with DA bottom) -->
+  <path d="M12 12h28v6H28v6h10v6H28v18H12V12z" fill="#fff"/>
+  <!-- Large 'DA' to the right of the F (moved down, different color) -->
+  <text x="44" y="46" font-family="Inter, system-ui, Arial, sans-serif" font-size="18" fill="#ffdd57" font-weight="800" text-anchor="middle">DA</text>
 </svg>

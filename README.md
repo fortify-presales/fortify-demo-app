@@ -6,7 +6,7 @@ This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot microservice application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
+This is a simple Spring Boot application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
 
 ## Technologies Used
 
@@ -15,6 +15,8 @@ This is a simple Spring Boot microservice application that demonstrates various 
 - Spring Data JPA
 - H2 In-Memory Database
 - Gradle 8.7
+- React
+- Tailwind CSS
 
 ## Intentional Security Vulnerabilities
 
@@ -62,7 +64,7 @@ No input validation or sanitization
 - Missing access controls and audit for payment operations (debug endpoints expose sensitive data even with minimal auth)
 - No encryption or tokenization for payment data at rest or in transit beyond default TLS (demo lacks proper PCI controls)
 
-## Building the Backend API
+## Building the Application
 
 ```bash
 # with a local Gradle installation
@@ -72,7 +74,7 @@ gradle clean build
 ./gradlew clean build
 ```
 
-## Running the Backend API
+## Running the Application
 
 ```bash
 # with a local Gradle installation
@@ -83,14 +85,30 @@ gradle bootRun
 
 # or run the jar file:
 java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
+
+# or if you have Docker installed
+docker build .
+docker run -d --name fortify-demo-app -p 8080:8080 fortify-demo-app:latest
 ```
 
-The application will start on `http://localhost:8080`
+The application will start on `http://localhost:8080`, you can browse to the frontend at this address or the Backend API at `http://localhost:8080/swagger/index.html`.
 
-## Building the Frontend SPA
+## Developing the Application
 
-This project includes a lightweight React + Vite frontend in the `frontend/` folder. 
-For frontend-specific developer notes, see the frontend README: [frontend/README.md](frontend/README.md)
+If you wish to develop new features for the application you can start the backend and frontend up separately. To start the backend (without frontend):
+
+```
+./gradlew clean bootRun -PskipFrontend=true
+```
+
+Then to start the frontend:
+
+```
+cd frontend
+npm run dev
+```
+
+Note: if you make changes to the frontend the vite server will automatically reload. However, for changes to the backend you will need to stop and start the backend.
 
 ## API Endpoints
 
@@ -98,11 +116,13 @@ For frontend-specific developer notes, see the frontend README: [frontend/README
 - `GET /api/users` - Get all users
 - `GET /api/users/search?query={query}` - Search users (SQL Injection vulnerable)
 - `GET /api/users/find?username={username}` - Find user (SQL Injection vulnerable)
-- `POST /api/users` - Create new user
-- `POST /api/users/login?username={username}&password={password}` - Login
+- `POST /api/users` - Create new user (stores plaintext password — INSECURE demo)
+- `PUT /api/users/{id}` - Update user (demo-only)
+- `POST /api/users/login?username={username}&password={password}` - Login (returns demo JWT)
+- `POST /api/users/logout` - Logout (blacklist provided token)
 - `GET /api/users/welcome?name={name}` - Welcome page (XSS vulnerable)
 - `GET /api/users/{id}/profile?message={message}` - User profile (XSS vulnerable)
-- `GET /api/users/debug/credentials` - Expose database credentials
+- `GET /api/users/debug/credentials` - Expose database credentials (INSECURE)
 
 ### File Operations
 - `GET /api/files/read?filename={filename}` - Read file (Path Traversal vulnerable)
@@ -118,7 +138,10 @@ For frontend-specific developer notes, see the frontend README: [frontend/README
 - `POST /api/payments` - Create a payment method (stores card number/CVV in plain text)
 - `DELETE /api/payments/{id}` - Delete a payment method
 - `POST /api/payments/charge?paymentId={id}&amount={amt}` - Simulate charging a payment (debug/demo)
-- `GET /api/payments/debug/rawcards` - Debug endpoint returning raw card numbers (requires auth)
+- `GET /api/payments/debug/rawcards` - Debug endpoint returning raw card numbers (INSECURE)
+
+### Transactions
+- `GET /api/transactions/payment/{paymentId}` - Get transactions for a given payment
 
 ### H2 Console
 - `http://localhost:8080/h2-console` - H2 Database Console
@@ -210,17 +233,6 @@ Note: the Login macro above sets the Logout condition URL to the custom logout e
 [URI]/api/users/logout
 ```
 This tells the scanner the application logout location so it can detect end-of-session events.
-To test the application running with vite and Fortify Connect Docker container, the following
-needs to be added to `vite.config.js`:
-```
-  server: {
-    port: 5173,
-    allowedHosts: [
-      'localhost',
-      'host.docker.internal'
-    ]
-  }
-```
 
 ### Expected Findings
 

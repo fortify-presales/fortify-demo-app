@@ -37,16 +37,3 @@ Troubleshooting
 - If the frontend cannot reach the backend during dev, ensure the Spring Boot app is running on port 8080 or update the proxy in `vite.config.js`.
 - If `npm install` fails due to peer dependency issues, try running `npm install --legacy-peer-deps` or ensure your Node version matches the project's requirements (Node 18+ recommended).
 
-Useful commands
--
-- Build and copy into Spring Boot static resources:
-
-```bash
-cd frontend
-npm install
-npm run build
-./gradlew copyFrontend
-```
-
-The Gradle `copyFrontend` task copies the built `dist` into `src/main/resources/static` for the Spring Boot jar build.
-

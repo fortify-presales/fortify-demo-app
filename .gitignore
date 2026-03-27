@@ -53,6 +53,7 @@ spring-boot-*.log
 .project
 .classpath
 .factorypath
+.sfdx/
 bin/
 out/
 
@@ -65,3 +66,4 @@ Thumbs.db
 *.fpr
 .otappsec
 aviator_token.txt
+.fdc.env

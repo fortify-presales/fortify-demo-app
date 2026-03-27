@@ -1,0 +1,35 @@
+
+services:
+  fortify-demo-app:
+    build: .
+    image: fortify-demo-app:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - demo-net
+    restart: unless-stopped
+
+  fortify-connect:
+    image: fortifydocker/fortify-connect:25.4.alpine.3.18
+    container_name: fdc_client
+    privileged: true
+    restart: unless-stopped
+    # Store credentials in a separate env file (DO NOT commit secrets).
+    env_file:
+      - .fdc.env
+    # Helpful defaults; override in .fdc.env if needed. The demo app is reachable
+    # at http://fortify-demo-app:8080 because both services share the same Compose network.
+    environment:
+      - FDC_ADDRESS=emea.fodconnect.com:443
+      - FDC_PROXY=3128
+      - DEMO_APP_URL=http://fortify-demo-app:8080
+      # Default tunnel logs flag; the PS wrapper sets FDC_TUNNEL_LOGS when running in debug.
+      - FDC_TUNNEL_LOGS=0
+    networks:
+      - demo-net
+    depends_on:
+      - fortify-demo-app
+
+networks:
+  demo-net:
+    driver: bridge
