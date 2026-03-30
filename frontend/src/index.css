@@ -3,11 +3,43 @@
 @tailwind utilities;
 
 /* Minimal custom styles for demo layout */
-html, body, #root { height: 100%; }
+:root {
+	--card-bg: rgba(255,255,255,0.82);
+	--input-bg: rgba(255,255,255,0.95);
+	--input-border: rgba(0,0,0,0.12);
+}
+
+/* Make root receive the fullscreen background image (use #root so background applies to entire app) */
+#root {
+	min-height: 100vh;
+	width: 100%;
+	background-image: url("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=1600&q=80");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+}
 
 /* small helper to style form labels */
 .label { @apply block text-sm font-medium text-gray-700; }
-.input { @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm; }
-.card { @apply bg-white rounded-lg shadow p-6; }
+
+.input {
+	@apply mt-1 block w-full rounded-md shadow-sm;
+	background-color: var(--input-bg);
+	border: 1px solid var(--input-border);
+	padding: 0.5rem 0.75rem;
+}
+
+.input:focus {
+	outline: none;
+	border-color: rgba(59,130,246,0.6);
+	box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+}
+
+.card {
+	background-color: var(--card-bg);
+	@apply rounded-lg shadow p-6;
+	backdrop-filter: blur(6px);
+}
 
 body { @apply bg-gray-100 font-sans; }

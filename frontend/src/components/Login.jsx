@@ -35,7 +35,9 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="card">
+    <div className="min-h-screen w-full flex items-center justify-center">
+    <div className="card w-full max-w-md mx-4">
+      <h1 className="text-3xl font-bold text-center mt-2 mb-8 text-blue-700">Fortify Demo App</h1>
       <h2 className="text-2xl font-semibold mb-4">Login</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
@@ -61,6 +63,7 @@ export default function Login({ onLogin }) {
         </div>
         {error && <div className="mt-3 text-red-600">{error}</div>}
       </form>
+    </div>
     </div>
   )
 }
