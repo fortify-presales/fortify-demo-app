@@ -26,6 +26,23 @@ RUN gradle bootJar --no-daemon -x test -PskipFrontend=true && cp $(ls -S build/l
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
+# Build metadata arguments (can be supplied by CI)
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=dev
+
+# OCI image labels - include useful metadata for registries and users
+# These are optional and can be overridden by build args / CI.
+LABEL org.opencontainers.image.title="Fortify Demo App"
+LABEL org.opencontainers.image.description="Demo app with intentionally insecure examples used for security training."
+LABEL org.opencontainers.image.url="https://github.com/opentext/fortify-demo-app"
+LABEL org.opencontainers.image.source="https://github.com/opentext/fortify-demo-app"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.authors="OpenText Presales Team"
+LABEL org.opencontainers.image.version=${VERSION}
+LABEL org.opencontainers.image.created=${BUILD_DATE}
+LABEL org.opencontainers.image.revision=${VCS_REF}
+
 # Do not include real secrets in images. This repo is intentionally insecure for testing.
 COPY --from=build /tmp/app.jar ./app.jar
 

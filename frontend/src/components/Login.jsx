@@ -3,12 +3,16 @@ import { login } from '../api'
 import Register from './Register'
 
 export default function Login({ onLogin }) {
-  const [username, setUsername] = useState(localStorage.getItem('username') || 'user')
-  const [password, setPassword] = useState('password')
+  // Prefill only if rememberMe was explicitly set previously
+  const remembered = localStorage.getItem('rememberMe') === 'true'
+  // If the demo 'rememberMe' flag was set previously, prefill username/password.
+  // INSECURE (intentional): storing passwords in localStorage is unsafe in real apps.
+  const [username, setUsername] = useState(remembered ? (localStorage.getItem('username') || '') : '')
+  const [password, setPassword] = useState(remembered ? (localStorage.getItem('password') || '') : '')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
-  const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('username'))
+  const [rememberMe, setRememberMe] = useState(remembered)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -16,11 +20,16 @@ export default function Login({ onLogin }) {
     setLoading(true)
     try {
       const token = await login(username, password)
-      // remember username only if user checked rememberMe
+      // persist rememberMe and username only when requested
       if (rememberMe) {
+        // INSECURE (intentional): demo persists password to localStorage when rememberMe is used
         localStorage.setItem('username', username)
+        localStorage.setItem('password', password)
+        localStorage.setItem('rememberMe', 'true')
       } else {
         localStorage.removeItem('username')
+        localStorage.removeItem('password')
+        localStorage.removeItem('rememberMe')
       }
       onLogin(token)
     } catch (err) {

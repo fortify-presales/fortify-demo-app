@@ -2,7 +2,7 @@
 services:
   fortify-demo-app:
     build: .
-    image: fortify-demo-app:latest
+    image: ghcr.io/fortify-presales/fortify-demo-app:latest
     container_name: fortify-demo-app
     ports:
       - "8080:8080"
