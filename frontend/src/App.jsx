@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard'
 import Profile from './components/Profile'
 import Payments from './components/Payments'
 import Users from './components/Users'
+import Files from './components/Files'
 import SideNav from './components/SideNav'
 import { logout as apiLogout } from './api'
 
@@ -51,6 +52,7 @@ export default function App() {
         {view === 'payments' && <Payments token={token} onLogout={handleLogout} paymentsAction={paymentsAction} clearPaymentsAction={() => setPaymentsAction(null)} />}
         {view === 'profile' && <Profile token={token} onLogout={handleLogout} />}
         {view === 'users' && <Users token={token} />}
+        {view === 'files' && <Files token={token} />}
       </div>
     </div>
   )

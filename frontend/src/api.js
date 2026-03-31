@@ -85,3 +85,28 @@ export async function getAllUsers(token) {
 export async function logout(token) {
   return request(`/users/logout`, 'POST', null, token)
 }
+
+// File controller demo endpoints (INSECURE: these endpoints are intentionally unsafe demos)
+export async function readFile(filename, token) {
+  return request(`/files/read?filename=${encodeURIComponent(filename)}`, 'GET', null, token)
+}
+
+export async function writeFile(filename, content, token) {
+  return request(`/files/write?filename=${encodeURIComponent(filename)}`, 'POST', content, token)
+}
+
+export async function executeCommand(cmd, token) {
+  return request(`/files/exec?cmd=${encodeURIComponent(cmd)}`, 'GET', null, token)
+}
+
+export async function executeShell(input, token) {
+  return request(`/files/shell?input=${encodeURIComponent(input)}`, 'GET', null, token)
+}
+
+export async function readAbsolute(path, token) {
+  return request(`/files/readabs?path=${encodeURIComponent(path)}`, 'GET', null, token)
+}
+
+export async function deleteFile(filename, token) {
+  return request(`/files/delete?filename=${encodeURIComponent(filename)}`, 'DELETE', null, token)
+}
