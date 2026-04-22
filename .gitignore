@@ -67,3 +67,9 @@ Thumbs.db
 .otappsec
 aviator_token.txt
 .fdc.env
+.debricked*
+.debricked.multiprojects.txt
+.gradle-init-script.debricked.groovy
+gradle.debricked.lock
+sc.gradle.debricked.lock
+skills
