@@ -23,6 +23,7 @@ services:
     environment:
       - FDC_ADDRESS=emea.fodconnect.com:443
       - FDC_PROXY=3128
+      - FDC_CERT_CHECK=0
       - DEMO_APP_URL=http://fortify-demo-app:8080
       # Default tunnel logs flag; the PS wrapper sets FDC_TUNNEL_LOGS when running in debug.
       - FDC_TUNNEL_LOGS=0

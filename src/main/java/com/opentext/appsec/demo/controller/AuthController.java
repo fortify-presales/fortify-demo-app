@@ -1,5 +1,7 @@
 package com.opentext.appsec.demo.controller;
 
+import com.opentext.appsec.demo.model.User;
+import com.opentext.appsec.demo.repository.UserRepository;
 import com.opentext.appsec.demo.security.EntraTokenService;
 import com.opentext.appsec.demo.security.JwtUtil;
 import org.springframework.http.HttpStatus;
@@ -17,10 +19,12 @@ public class AuthController {
 
     private final EntraTokenService entraTokenService;
     private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
-    public AuthController(EntraTokenService entraTokenService, JwtUtil jwtUtil) {
+    public AuthController(EntraTokenService entraTokenService, JwtUtil jwtUtil, UserRepository userRepository) {
         this.entraTokenService = entraTokenService;
         this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -46,8 +50,13 @@ public class AuthController {
         String entraToken = authHeader.substring(7);
 
         try {
-            // Validate Entra token and extract username
-            String username = entraTokenService.validateEntraTokenAndGetUsername(entraToken);
+            // Validate Entra token and extract Entra principal (UPN/email/unique name)
+            String entraPrincipal = entraTokenService.validateEntraTokenAndGetUsername(entraToken);
+            String username = mapToLocalUsername(entraPrincipal);
+            if (username == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("No mapped local user found for Entra principal: " + entraPrincipal);
+            }
 
             // Generate application JWT
             String appJwt = jwtUtil.generateToken(username);
@@ -60,5 +69,37 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Token exchange failed: " + e.getMessage());
         }
+    }
+
+    private String mapToLocalUsername(String entraPrincipal) {
+        if (entraPrincipal == null || entraPrincipal.isBlank()) {
+            return null;
+        }
+
+        String principal = entraPrincipal.trim();
+
+        // 1) direct username match (case-insensitive)
+        User byUsername = userRepository.findByUsernameIgnoreCase(principal).orElse(null);
+        if (byUsername != null) {
+            return byUsername.getUsername();
+        }
+
+        // 2) direct email match (case-insensitive)
+        User byEmail = userRepository.findByEmailIgnoreCase(principal).orElse(null);
+        if (byEmail != null) {
+            return byEmail.getUsername();
+        }
+
+        // 3) UPN local-part mapping: user@tenant.onmicrosoft.com -> user
+        int atPos = principal.indexOf('@');
+        if (atPos > 0) {
+            String localPart = principal.substring(0, atPos);
+            User byLocalPart = userRepository.findByUsernameIgnoreCase(localPart).orElse(null);
+            if (byLocalPart != null) {
+                return byLocalPart.getUsername();
+            }
+        }
+
+        return null;
     }
 }

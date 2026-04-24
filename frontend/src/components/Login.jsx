@@ -88,7 +88,14 @@ export default function Login({ onLogin }) {
     // Exchange Entra token for JWT from backend
     const jwtToken = await exchangeEntraTokenForJwt(tokenResponse.accessToken)
     localStorage.setItem('token', jwtToken)
-    localStorage.setItem('username', tokenResponse.account?.username || '')
+    // Extract local username from the app JWT sub claim, not the Entra UPN.
+    // The backend maps e.g. user@tenant.onmicrosoft.com -> local "user" before signing.
+    try {
+      const payload = JSON.parse(atob(jwtToken.split('.')[1]))
+      localStorage.setItem('username', payload.sub || tokenResponse.account?.username || '')
+    } catch {
+      localStorage.setItem('username', tokenResponse.account?.username || '')
+    }
     onLogin(jwtToken)
   }
 

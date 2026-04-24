@@ -2,12 +2,9 @@ package com.opentext.appsec.demo.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
-import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -41,19 +38,6 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
-            // Enable OAuth2 Resource Server JWT support.
-            // JwtDecoder is auto-configured from spring.security.oauth2.resourceserver.jwt.* properties.
-            // Skip bearer-token extraction for token exchange endpoint so controller handles it explicitly.
-            BearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
-            http.oauth2ResourceServer(oauth2 -> oauth2
-                    .bearerTokenResolver(request -> {
-                        if ("/api/auth/entra/exchange".equals(request.getRequestURI())) {
-                            return null;
-                        }
-                        return defaultResolver.resolve(request);
-                    })
-                    .jwt(Customizer.withDefaults()));
 
         // Allow frames for H2 console
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));

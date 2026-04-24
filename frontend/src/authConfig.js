@@ -1,11 +1,22 @@
 // Microsoft Authentication Library (MSAL) configuration
 
+const isViteDevServer =
+  typeof window !== 'undefined' && window.location && window.location.port === '5173';
+
+const redirectUri = isViteDevServer
+  ? (import.meta.env.VITE_API_REDIRECT_URI || window.location.origin)
+  : window.location.origin;
+
+const popupRedirectUriValue = isViteDevServer
+  ? (import.meta.env.VITE_ENTRA_POPUP_REDIRECT_URI || `${window.location.origin}/auth-popup.html`)
+  : `${window.location.origin}/auth-popup.html`;
+
 export const msalConfig = {
   auth: {
     clientId: import.meta.env.VITE_ENTRA_CLIENT_ID,
     authority: import.meta.env.VITE_ENTRA_AUTHORITY,
-    redirectUri: import.meta.env.VITE_API_REDIRECT_URI || window.location.origin,
-    postLogoutRedirectUri: import.meta.env.VITE_API_REDIRECT_URI || window.location.origin,
+    redirectUri,
+    postLogoutRedirectUri: redirectUri,
     navigateToLoginRequestUrl: false,
   },
   cache: {
@@ -21,8 +32,7 @@ export const msalConfig = {
   },
 };
 
-export const popupRedirectUri =
-  import.meta.env.VITE_ENTRA_POPUP_REDIRECT_URI || `${window.location.origin}/auth-popup.html`;
+export const popupRedirectUri = popupRedirectUriValue;
 
 export const loginRequest = {
   scopes: (import.meta.env.VITE_API_SCOPES || 'User.Read')
