@@ -40,6 +40,22 @@ export async function login(username, password) {
   return token
 }
 
+export async function exchangeEntraTokenForJwt(entraAccessToken) {
+  // Exchange Microsoft Entra token for application JWT
+  const res = await fetch(`${API_BASE}/auth/entra/exchange`, {
+    method: 'POST',
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${entraAccessToken}`
+    }
+  })
+  if (!res.ok) {
+    const txt = await res.text()
+    throw new Error(txt || 'Token exchange failed')
+  }
+  return (await res.text()).trim()
+}
+
 export async function getUserByUsername(username, token) {
   return request(`/users/find?username=${encodeURIComponent(username)}`, 'GET', null, token)
 }

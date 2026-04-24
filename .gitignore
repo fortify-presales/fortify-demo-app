@@ -73,3 +73,4 @@ aviator_token.txt
 gradle.debricked.lock
 sc.gradle.debricked.lock
 skills
+frontend/.env.local

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useMsal } from '@azure/msal-react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import Profile from './components/Profile'
@@ -12,6 +13,15 @@ export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null)
   const [view, setView] = useState('dashboard')
   const [paymentsAction, setPaymentsAction] = useState(null)
+
+  // Try to use MSAL if available
+  const msalContext = (() => {
+    try {
+      return useMsal()
+    } catch {
+      return null
+    }
+  })()
 
   const handleLogin = (t) => {
     localStorage.setItem('token', t)
@@ -28,11 +38,27 @@ export default function App() {
         localStorage.removeItem('token')
         localStorage.removeItem('username')
         setToken(null)
+        
+        // Also logout from Entra if using SSO
+        if (msalContext?.accounts.length > 0) {
+          msalContext.instance.logoutRedirect({
+            account: msalContext.accounts[0],
+            postLogoutRedirectUri: window.location.origin,
+          }).catch(err => console.error('Entra logout error:', err))
+        }
       })
     } else {
       localStorage.removeItem('token')
       localStorage.removeItem('username')
       setToken(null)
+      
+      // Also logout from Entra if using SSO
+      if (msalContext?.accounts.length > 0) {
+        msalContext.instance.logoutRedirect({
+          account: msalContext.accounts[0],
+          postLogoutRedirectUri: window.location.origin,
+        }).catch(err => console.error('Entra logout error:', err))
+      }
     }
   }
 

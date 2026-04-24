@@ -18,6 +18,13 @@ This is a simple Spring Boot application that demonstrates various security vuln
 - React
 - Tailwind CSS
 
+Optional:
+- Microsoft Entra ID (Azure AD) for Single Sign-On (SSO) and OAuth2 authentication
+- MSAL.js (frontend) for Entra login and token handling
+- Spring Security (backend) as OAuth2 resource server with Entra JWT validation
+
+See [ENTRA_SETUP_GUIDE.md](ENTRA_SETUP_GUIDE.md) for information on how to setup Login Authentication using Microsoft Entra.
+
 ## Intentional Security Vulnerabilities
 
 This application includes the following intentional security vulnerabilities:
@@ -64,6 +71,14 @@ No input validation or sanitization
 - Missing access controls and audit for payment operations (debug endpoints expose sensitive data even with minimal auth)
 - No encryption or tokenization for payment data at rest or in transit beyond default TLS (demo lacks proper PCI controls)
 
+### 10. Insecure Entra / OAuth Token Handling
+- Relaxed issuer validation fallback for Entra token exchange (accepts signature-valid token even when issuer claim mismatches) - INSECURE demo behavior
+- Token exchange endpoint accepts externally obtained Entra access tokens and converts them to local demo JWTs with minimal claim hardening
+- Frontend may fall back from custom API scope to `User.Read` when consent is unavailable, weakening intended API audience restrictions
+- Auth artifacts are cached in browser localStorage, increasing exposure if XSS is present
+- Audience (`aud`) and Authorized Party (`azp`) claims are not validated in token exchange
+- Backend disables CSRF protection for authentication flows
+
 ## Building the Application
 
 ```bash
@@ -91,7 +106,7 @@ docker build .
 docker run -d --name fortify-demo-app -p 8080:8080 fortify-demo-app:latest
 ```
 
-The application will start on `http://localhost:8080`, you can browse to the frontend at this address or the Backend API at `http://localhost:8080/swagger/index.html`.
+The application will be available on `http://localhost:8080`, you can browse to the frontend at this address or the Backend API at `http://localhost:8080/swagger-ui/index.html`.
 
 ## Developing the Application
 
@@ -156,6 +171,9 @@ After starting the application (see [Running the Application](#running-the-appli
 Notes:
 - These docs describe the intentionally insecure endpoints in this demo application.
 - If you change the server port, update the host/port in the URLs above accordingly.
+- The Swagger UI and OpenAPI JSON remain publicly accessible even when Entra integration is enabled.
+- Protected `/api/**` operations still require an `Authorization: Bearer <token>` header when you use `Try it out`.
+- You can keep using the API the same way as before by logging in via `/api/users/login` to obtain the demo JWT, then pasting that token into the Swagger **Authorize** dialog.
 
 ## Creating the JWT
 
@@ -247,6 +265,8 @@ The security scan should identify:
 - Insecure authentication mechanisms
 - Insecure storage and exposure of payment card data (plain-text PAN/CVV) — PCI/PII issues
 - Endpoints that deliberately log or reflect sensitive payment data (information disclosure)
+- OAuth / OpenID Connect token validation weaknesses in the Entra integration
+- Weak claim validation and insecure token exchange behavior in the Entra login flow
 
 ## License
 
