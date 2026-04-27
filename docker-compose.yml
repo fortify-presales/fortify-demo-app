@@ -1,9 +1,21 @@
 
 services:
   fortify-demo-app:
-    build: .
+    build:
+      context: .
+      args:
+        # Pass these via shell/.env/--env-file so Vite can embed them at build time.
+        ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-your-client-id}
+        ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-your-tenant-id}
+        ENTRA_AUTHORITY: ${ENTRA_AUTHORITY:-https://login.microsoftonline.com/your-tenant-id}
+        ENTRA_API_SCOPES: ${ENTRA_API_SCOPES:-User.Read}
+        ENTRA_API_REDIRECT_URI: ${ENTRA_API_REDIRECT_URI:-http://localhost:8080}
+        ENTRA_POPUP_REDIRECT_URI: ${ENTRA_POPUP_REDIRECT_URI:-http://localhost:8080/auth-popup.html}
     image: ghcr.io/fortify-presales/fortify-demo-app:latest
     container_name: fortify-demo-app
+    environment:
+      # Provide this in your shell or .env file: ENTRA_TENANT_ID=<your-tenant-id>
+      - ENTRA_TENANT_ID=${ENTRA_TENANT_ID:-unknown}
     ports:
       - "8080:8080"
     networks:

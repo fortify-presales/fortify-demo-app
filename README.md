@@ -101,12 +101,38 @@ gradle bootRun
 # or run the jar file:
 java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
 
-# or if you have Docker installed
-docker build .
-docker run -d --name fortify-demo-app -p 8080:8080 fortify-demo-app:latest
+# or run with Docker Compose (recommended)
+docker compose up --build -d
 ```
 
 The application will be available on `http://localhost:8080`, you can browse to the frontend at this address or the Backend API at `http://localhost:8080/swagger-ui/index.html`.
+
+### Docker Compose + Entra Variables
+
+When running with Docker Compose, the frontend is built into static assets during image build. This means frontend Entra settings are read at build time from `frontend/.env.local` (via `--env-file`) and passed as Docker build args.
+
+Expected frontend variables in `frontend/.env.local`:
+
+```dotenv
+ENTRA_CLIENT_ID=<frontend-client-id>
+ENTRA_TENANT_ID=<tenant-id>
+ENTRA_AUTHORITY=https://login.microsoftonline.com/<tenant-id>
+ENTRA_API_SCOPES=api://<backend-client-id>/access_as_user
+ENTRA_API_REDIRECT_URI=http://localhost:8080
+ENTRA_POPUP_REDIRECT_URI=http://localhost:8080/auth-popup.html
+```
+
+Backend token validation uses `ENTRA_TENANT_ID` at runtime. You can set this in your root `.env` file or pass it from your shell.
+
+Quick pairing setup for Docker Compose:
+
+```bash
+# root backend runtime variable
+cp .env.example .env
+
+# frontend build-time variables are read from this file
+docker compose --env-file frontend/.env.local up --build -d
+```
 
 ## Developing the Application
 

@@ -2,6 +2,22 @@
 # Build stage: use Gradle image to build the fat/boot jar
 FROM node:18-alpine AS frontend
 WORKDIR /frontend
+
+# Vite variables must be available at build time so they are embedded in static assets.
+ARG ENTRA_CLIENT_ID
+ARG ENTRA_TENANT_ID
+ARG ENTRA_AUTHORITY
+ARG ENTRA_API_SCOPES
+ARG ENTRA_API_REDIRECT_URI
+ARG ENTRA_POPUP_REDIRECT_URI
+
+ENV ENTRA_CLIENT_ID=${ENTRA_CLIENT_ID}
+ENV ENTRA_TENANT_ID=${ENTRA_TENANT_ID}
+ENV ENTRA_AUTHORITY=${ENTRA_AUTHORITY}
+ENV ENTRA_API_SCOPES=${ENTRA_API_SCOPES}
+ENV ENTRA_API_REDIRECT_URI=${ENTRA_API_REDIRECT_URI}
+ENV ENTRA_POPUP_REDIRECT_URI=${ENTRA_POPUP_REDIRECT_URI}
+
 # Install frontend deps and build (uses frontend/package.json)
 COPY frontend/package*.json frontend/package-lock*.json ./
 RUN npm ci --silent

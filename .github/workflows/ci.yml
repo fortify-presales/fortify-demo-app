@@ -81,6 +81,12 @@ jobs:
             VERSION=${{ github.ref_name }}
             VCS_REF=${{ github.sha }}
             BUILD_DATE=${{ steps.meta.outputs.date }}
+            ENTRA_CLIENT_ID=${{ vars.ENTRA_CLIENT_ID }}
+            ENTRA_TENANT_ID=${{ vars.ENTRA_TENANT_ID }}
+            ENTRA_AUTHORITY=${{ vars.ENTRA_AUTHORITY }}
+            ENTRA_API_SCOPES=${{ vars.ENTRA_API_SCOPES }}
+            ENTRA_API_REDIRECT_URI=${{ vars.ENTRA_API_REDIRECT_URI }}
+            ENTRA_POPUP_REDIRECT_URI=${{ vars.ENTRA_POPUP_REDIRECT_URI }}
           labels: |
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}

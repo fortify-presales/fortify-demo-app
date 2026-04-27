@@ -1,20 +1,18 @@
 // Microsoft Authentication Library (MSAL) configuration
 
-const isViteDevServer =
-  typeof window !== 'undefined' && window.location && window.location.port === '5173';
+const authorityFromTenant = import.meta.env.ENTRA_TENANT_ID
+  ? `https://login.microsoftonline.com/${import.meta.env.ENTRA_TENANT_ID}`
+  : undefined;
 
-const redirectUri = isViteDevServer
-  ? (import.meta.env.VITE_API_REDIRECT_URI || window.location.origin)
-  : window.location.origin;
+const redirectUri = import.meta.env.ENTRA_API_REDIRECT_URI || window.location.origin;
 
-const popupRedirectUriValue = isViteDevServer
-  ? (import.meta.env.VITE_ENTRA_POPUP_REDIRECT_URI || `${window.location.origin}/auth-popup.html`)
-  : `${window.location.origin}/auth-popup.html`;
+const popupRedirectUriValue =
+  import.meta.env.ENTRA_POPUP_REDIRECT_URI || `${window.location.origin}/auth-popup.html`;
 
 export const msalConfig = {
   auth: {
-    clientId: import.meta.env.VITE_ENTRA_CLIENT_ID,
-    authority: import.meta.env.VITE_ENTRA_AUTHORITY,
+    clientId: import.meta.env.ENTRA_CLIENT_ID,
+    authority: import.meta.env.ENTRA_AUTHORITY || authorityFromTenant,
     redirectUri,
     postLogoutRedirectUri: redirectUri,
     navigateToLoginRequestUrl: false,
@@ -35,7 +33,7 @@ export const msalConfig = {
 export const popupRedirectUri = popupRedirectUriValue;
 
 export const loginRequest = {
-  scopes: (import.meta.env.VITE_API_SCOPES || 'User.Read')
+  scopes: (import.meta.env.ENTRA_API_SCOPES || 'User.Read')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean),

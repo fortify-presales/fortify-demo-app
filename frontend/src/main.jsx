@@ -8,7 +8,7 @@ import './index.css'
 
 // Initialize MSAL if Entra config is available, otherwise run without SSO
 let msalInstance = null
-if (import.meta.env.VITE_ENTRA_CLIENT_ID) {
+if (import.meta.env.ENTRA_CLIENT_ID) {
   msalInstance = new PublicClientApplication(msalConfig)
 }
 

@@ -1,5 +1,26 @@
 # Frontend (React + Vite)
 
+Environment Variables (ENTRA_)
+-
+- The frontend reads Entra settings from `ENTRA_*` variables (not `VITE_*`).
+- For local dev (`npm run dev`), place values in `frontend/.env.local`.
+- For Docker Compose, use `docker compose --env-file frontend/.env.local ...` so values are passed as build args.
+
+Example `frontend/.env.local`:
+
+```dotenv
+ENTRA_CLIENT_ID=<frontend-client-id>
+ENTRA_TENANT_ID=<tenant-id>
+ENTRA_AUTHORITY=https://login.microsoftonline.com/<tenant-id>
+ENTRA_API_SCOPES=api://<backend-client-id>/access_as_user
+ENTRA_API_REDIRECT_URI=http://localhost:5173
+ENTRA_POPUP_REDIRECT_URI=http://localhost:5173/auth-popup.html
+```
+
+For Docker Compose mode (app served on port 8080), set:
+- `ENTRA_API_REDIRECT_URI=http://localhost:8080`
+- `ENTRA_POPUP_REDIRECT_URI=http://localhost:8080/auth-popup.html`
+
 Dev:
 
 ```bash
@@ -20,6 +41,14 @@ cd frontend
 npm run build
 cp -r dist/* ../src/main/resources/static/
 ```
+
+Run with Docker Compose (recommended for full app):
+
+```bash
+docker compose --env-file frontend/.env.local up --build -d
+```
+
+Note: frontend env values are embedded at image build time. Rebuild the image after env changes.
 
 Notes
 -

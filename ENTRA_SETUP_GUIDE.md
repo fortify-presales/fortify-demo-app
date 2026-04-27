@@ -113,15 +113,16 @@ Optional (recommended for easier consent flow):
 
 ```bash
 # Copy from .env.example and fill in your Azure values
-VITE_ENTRA_CLIENT_ID=<frontend-client-id-from-step-1.1>
-VITE_ENTRA_TENANT_ID=<tenant-id-from-step-1.1>
-VITE_ENTRA_AUTHORITY=https://login.microsoftonline.com/<tenant-id>
-VITE_API_SCOPES=api://<backend-client-id>/access_as_user
-VITE_API_REDIRECT_URI=http://localhost:5173
+ENTRA_CLIENT_ID=<frontend-client-id-from-step-1.1>
+ENTRA_TENANT_ID=<tenant-id-from-step-1.1>
+ENTRA_AUTHORITY=https://login.microsoftonline.com/<tenant-id>
+ENTRA_API_SCOPES=api://<backend-client-id>/access_as_user
+ENTRA_API_REDIRECT_URI=http://localhost:5173
+ENTRA_POPUP_REDIRECT_URI=http://localhost:5173/auth-popup.html
 ```
 
 If your tenant restrictions prevent consenting to custom API scopes:
-- Temporarily set `VITE_API_SCOPES=User.Read` to unblock login while consent issues are resolved.
+- Temporarily set `ENTRA_API_SCOPES=User.Read` to unblock login while consent issues are resolved.
 
 ### Step 2.2: Configure Backend
 
@@ -149,7 +150,28 @@ npm install
 npm run dev
 ```
 
-The app should now be running at `http://localhost:5173` with:
+### Step 2.4: Run with Docker Compose (Single Container App)
+
+Use this flow when running the app as one container that serves both backend and built frontend assets:
+
+```bash
+# root backend runtime setting (ENTRA_TENANT_ID)
+cp .env.example .env
+
+# frontend build-time settings
+docker compose --env-file frontend/.env.local up --build -d
+```
+
+Important behavior:
+- Frontend ENTRA variables are embedded at build time (during `npm run build` inside Docker).
+- If you change `frontend/.env.local`, rebuild the image (`up --build` or `build --no-cache`) for frontend changes to take effect.
+- Backend JWT issuer/JWK settings still use `ENTRA_TENANT_ID` at runtime from root `.env` (or shell environment).
+
+Expected URLs by mode:
+- Frontend dev server mode: `http://localhost:5173`
+- Docker Compose mode (embedded frontend): `http://localhost:8080`
+
+The app should show:
 - A "Sign in with Microsoft" button (if Entra is configured)
 - A fallback local login form
 
@@ -173,6 +195,7 @@ The app should now be running at `http://localhost:5173` with:
 - Verify `.env.local` is set correctly
 - Restart frontend dev server after changing `.env.local`
 - Check browser console for MSAL errors
+- If using Docker Compose, rebuild the image after env changes: `docker compose --env-file frontend/.env.local up --build -d`
 
 **Token validation fails on backend**
 - Verify `application.properties` has correct issuer URI and JWK set URI
@@ -191,7 +214,7 @@ The app should now be running at `http://localhost:5173` with:
 **"Entra login failed: Token exchange failed"**
 - Confirm backend is actually running on port 8080 during login.
 - Confirm frontend is using the latest `.env.local` values.
-- Confirm API permission for `access_as_user` is added and consented, or use temporary fallback `VITE_API_SCOPES=User.Read`.
+- Confirm API permission for `access_as_user` is added and consented, or use temporary fallback `ENTRA_API_SCOPES=User.Read`.
 
 **"The iss claim is not valid"**
 - This means issuer mismatch between token and configured issuer URI.
@@ -219,22 +242,26 @@ These items are intentionally left insecure in this demo so scanners and reviewe
 
 ### Azure App Service (Example)
 
-1. Set environment variables on the App Service:
-   - `VITE_ENTRA_CLIENT_ID`
-   - `VITE_ENTRA_TENANT_ID`
-   - `VITE_ENTRA_AUTHORITY`
-   - `VITE_API_SCOPES`
-   - `VITE_API_REDIRECT_URI` (set to your production domain)
+1. Build the container image with frontend ENTRA variables:
+   - `ENTRA_CLIENT_ID`
+   - `ENTRA_TENANT_ID`
+   - `ENTRA_AUTHORITY`
+   - `ENTRA_API_SCOPES`
+   - `ENTRA_API_REDIRECT_URI` (set to your production domain)
+   - `ENTRA_POPUP_REDIRECT_URI` (set to your production popup callback)
 
-2. Update backend config:
+2. Set runtime environment variables for backend token validation:
+   - `ENTRA_TENANT_ID`
+
+3. Update backend config:
    - Set `spring.security.oauth2.resourceserver.jwt.issuer-uri`
    - Set `spring.security.oauth2.resourceserver.jwt.jwk-set-uri`
 
-3. Update Azure Portal app registrations:
+4. Update Azure Portal app registrations:
    - Add production redirect URIs (e.g., `https://yourapp.azurewebsites.net`)
    - Remove localhost URIs
 
-4. Deploy the app
+5. Deploy the app
 
 ---
 
