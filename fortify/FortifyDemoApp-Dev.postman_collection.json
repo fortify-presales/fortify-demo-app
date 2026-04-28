@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
+      "value": "http://fortify-demo-app:8080",
       "type": "string"
     },
     {
