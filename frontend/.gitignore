@@ -2,3 +2,12 @@ node_modules/
 dist/
 /.idea
 /.vscode
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+/tests/screenshots/
+/tests/videos/

@@ -67,3 +67,38 @@ Troubleshooting
 - If the frontend cannot reach the backend during dev, ensure the Spring Boot app is running on port 8080 or update the proxy in `vite.config.js`.
 - If `npm install` fails due to peer dependency issues, try running `npm install --legacy-peer-deps` or ensure your Node version matches the project's requirements (Node 18+ recommended).
 
+## End-to-End Testing with Playwright
+
+This project uses [Playwright](https://playwright.dev/) for E2E browser testing of the React frontend. Tests are located in `frontend/tests/`.
+
+### Running the Tests
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Run the tests:
+   ```bash
+   npx playwright test
+   ```
+   This will run all tests in `frontend/tests/`.
+
+### HAR File Output
+- The main workflow test generates a HAR file of all network traffic at `fortify/network.har` (repo root) after each run.
+- You can open this file in Chrome DevTools or any HAR viewer for analysis.
+
+### Screenshots & Debugging
+- Screenshots are saved in `frontend/tests/screenshots/` for each workflow step.
+- Playwright will also save a trace if a test fails for easier debugging.
+
+### Custom Test Credentials
+- By default, tests use the seeded user: `user` / `password`.
+- Override with environment variables:
+  ```bash
+  E2E_USERNAME=myuser E2E_PASSWORD=mypass npx playwright test
+  ```
+
+### See Also
+- Main test: `frontend/tests/workflow.spec.ts`
+- Playwright docs: https://playwright.dev/docs/test-intro
+

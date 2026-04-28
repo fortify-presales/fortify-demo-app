@@ -134,6 +134,50 @@ cp .env.example .env
 docker compose --env-file frontend/.env.local up --build -d
 ```
 
+## Running Playwright End-to-End Tests
+
+Playwright is used for E2E testing of the frontend (React) application. These tests simulate real user workflows and validate the UI and API integration.
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- All backend and frontend dependencies installed (`npm install` in `frontend/`)
+- Backend server running (or use Docker Compose)
+
+### How to Run Tests
+
+1. Open a terminal and navigate to the `frontend` directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies (if not already done):
+   ```bash
+   npm install
+   ```
+3. Run Playwright tests:
+   ```bash
+   npx playwright test
+   ```
+   This will execute all tests in `frontend/tests/`.
+
+### HAR File Generation
+- When you run the workflow test, a HAR file of all network traffic is generated at `fortify/network.har` in the repo root.
+- This can be analyzed with tools like Chrome DevTools or HAR viewers.
+
+### Screenshots & Debugging
+- Screenshots are saved in `frontend/tests/screenshots/` for each major workflow step.
+- If a test fails, Playwright will also save a trace for debugging.
+
+### Customizing Test Users
+- By default, tests use the seeded user: `user` / `password`.
+- You can override credentials with environment variables:
+  ```bash
+  E2E_USERNAME=myuser E2E_PASSWORD=mypass npx playwright test
+  ```
+
+### More Info
+- See `frontend/tests/workflow.spec.ts` for the main E2E workflow.
+- See Playwright docs: https://playwright.dev/docs/test-intro
+
 ## Developing the Application
 
 If you wish to develop new features for the application you can start the backend and frontend up separately. To start the backend (without frontend):

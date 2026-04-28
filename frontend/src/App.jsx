@@ -9,19 +9,20 @@ import Files from './components/Files'
 import SideNav from './components/SideNav'
 import { logout as apiLogout } from './api'
 
-export default function App() {
+
+export default function App({ msalAvailable }) {
   const [token, setToken] = useState(localStorage.getItem('token') || null)
   const [view, setView] = useState('dashboard')
   const [paymentsAction, setPaymentsAction] = useState(null)
 
-  // Try to use MSAL if available
-  const msalContext = (() => {
+  // Only call useMsal if MSAL is available
+  const msalContext = msalAvailable ? (() => {
     try {
       return useMsal()
     } catch {
       return null
     }
-  })()
+  })() : null;
 
   const handleLogin = (t) => {
     localStorage.setItem('token', t)
@@ -62,10 +63,11 @@ export default function App() {
     }
   }
 
+
   if (!token) return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <Login onLogin={handleLogin} />
+        <Login onLogin={handleLogin} msalAvailable={msalAvailable} />
       </div>
     </div>
   )

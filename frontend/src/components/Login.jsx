@@ -5,15 +5,16 @@ import { login, exchangeEntraTokenForJwt } from '../api'
 import { loginRequest } from '../authConfig'
 import Register from './Register'
 
-export default function Login({ onLogin }) {
-  // Check if MSAL is available
-  const msalContext = (() => {
+
+export default function Login({ onLogin, msalAvailable }) {
+  // Only call useMsal if MSAL is available
+  const msalContext = msalAvailable ? (() => {
     try {
       return useMsal()
     } catch {
       return null
     }
-  })()
+  })() : null;
 
   // Prefill only if rememberMe was explicitly set previously
   const remembered = localStorage.getItem('rememberMe') === 'true'
