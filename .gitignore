@@ -75,3 +75,5 @@ sc.gradle.debricked.lock
 skills
 frontend/.env.local
 .env
+fortify.config
+aviator.token.txt

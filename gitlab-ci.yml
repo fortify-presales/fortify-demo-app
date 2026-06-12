@@ -1,0 +1,154 @@
+#
+# An example GitLab CI/CD pipeline configuration file for a gradle application
+# that includes build, test, deploy, and Fortify SAST/DAST scans.
+# This pipeline uses the Fortify fcli tool and GitLab CI/CD features.
+#
+# To use set the following variables in your GitLab project:
+#   - FOD_URL: Fortify on Demand URL (e.g., https://ams.fortify.com)
+#   - FOD_API_URL: Fortify API URL (e.g., https://api.ams.fortify.com)
+#   - FOD_CLIENT_ID: Fortify on Demand Client ID
+#   - FOD_CLIENT_SECRET: Fortify on Demand Client Secret
+#   - FOD_APP_NAME_POSTFIX: Optional postfix for the application name
+#   - FOD_PARENT_RELEASE_NAME: Optional parent release name for new releases that are created
+#   - GITLAB_API_TOKEN: GitLab personal/project access token (api scope) used to post Fortify MR comments
+
+spec:
+  inputs:
+    debug:
+      default: false
+      type: boolean
+    
+---
+
+image: gradle:8.7-jdk17    # default image to use for the pipeline
+
+stages:
+  - build
+  - test
+  - scan
+  - deploy
+
+workflow:
+  rules:
+    # Only run the pipeline for merge requests and pushes to branches (not both when a merge request is open)
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
+variables:
+  DEFAULT_APP_NAME: "Fortify Demo App"
+  DEFAULT_PARENT_RELEASE_NAME: "main"
+  DEFAULT_RELEASE_NAME: "${CI_COMMIT_BRANCH}"
+  NODE_VERSION: "22.22.1"
+
+.node_setup: &node_setup |
+  set -e
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get update
+    apt-get install -y curl xz-utils
+  elif command -v apk >/dev/null 2>&1; then
+    apk add --no-cache curl xz
+  fi
+  mkdir -p "${CI_PROJECT_DIR}/.node"
+  curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz
+  tar -xJf /tmp/node.tar.xz -C "${CI_PROJECT_DIR}/.node" --strip-components=1
+  export PATH="${CI_PROJECT_DIR}/.node/bin:${PATH}"
+  node -v
+  npm -v
+
+# This job prepares the environment variables for the Fortify scan based on whether it's a merge request pipeline or a branch pipeline. 
+# It creates a build.env file with the necessary variables that will be used in subsequent jobs. Use it to customize the release naming convention or 
+# to set additional variables like FOD_PARENT_RELEASE if you want to copy from an existing release. 
+env-prepare:
+  stage: build
+  script: |
+    echo "FOD_PARENT_RELEASE=${DEFAULT_APP_NAME}${FOD_APP_NAME_POSTFIX}:${DEFAULT_PARENT_RELEASE_NAME}-gitlab" >> build.env
+    if [[ $CI_MERGE_REQUEST_ID != "" ]]; then
+        echo "Running in a merge request pipeline ..."
+        echo "FOD_RELEASE=${DEFAULT_APP_NAME}${FOD_APP_NAME_POSTFIX}:MR${CI_MERGE_REQUEST_IID}-gitlab" >> build.env
+    else
+        echo "Running in a branch pipeline ..."
+        echo "FOD_RELEASE=${DEFAULT_APP_NAME}${FOD_APP_NAME_POSTFIX}:${CI_COMMIT_BRANCH}-gitlab" >> build.env
+    fi
+    echo "Created build.env with the following contents:"
+    cat build.env
+  artifacts:
+    reports:
+      dotenv: build.env
+
+# This is a sample job to build the application. You can replace it with your actual build job.
+gradle-build:
+  stage: build
+  before_script:
+    - *node_setup
+  script:
+    - echo "Building the application..."
+    - ./gradlew clean build -PskipFrontend=true
+
+# This is a sample job to test a gradle application using pytest. You can replace it with your actual test job.
+gradle-test:
+  stage: test
+  before_script:
+    - *node_setup
+  script:
+    - ./gradlew clean test
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    when: always
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
+
+fortify-ast-scan:
+  stage: scan
+  needs: 
+    - job: env-prepare
+  before_script:
+    - *node_setup
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        DO_PR_COMMENT: "true"
+        CHECK_POLICY_ACTION: fortify/check-pr-policy.yaml
+        CHECK_POLICY_EXTRA_OPTS: --on-unsigned=ignore --scan-types Static
+    - if: $CI_COMMIT_BRANCH
+      variables:
+        DO_PR_COMMENT: "false"
+  script: |
+    unset SSC_URL SSC_APP_NAME SSC_APP_VERSION_NAME SSC_AUTH_TOKEN
+    npx @fortify/setup@v2 env init --tools=fcli:bootstrapped
+    npx @fortify/setup@v2 env gitlab --file="$GITLAB_ENV"
+    source <(npx @fortify/setup env shell)
+    fcli action run ci
+  artifacts:
+    when: always
+    reports:
+      sast: gl-fortify-sast.json
+    paths:
+      - gl-fortify-sast.json
+      - release_summary.md
+  variables:                      # Specify AST scan configuration like SSC/FoD URL/credentials, tasks to execute, ...
+    FOD_URL: ${FOD_URL}           # See https://fortify.github.io/fcli/<fcli-version>/generic-actions.html#_ci for details
+    FOD_CLIENT_ID: ${FOD_CLIENT_ID}  
+    FOD_CLIENT_SECRET: ${FOD_CLIENT_SECRET}
+    DO_SETUP: true
+    DO_SAST_SCAN: true
+    SETUP_EXTRA_OPTS: '--copy-from "${FOD_PARENT_RELEASE}" --use-aviator' # --oss
+    PACKAGE_EXTRA_OPTS: '-bt gradle -bf build.gradle -bc "clean build -PskipFrontend=true"'
+    #SAST_WAIT_EXTRA_OPTS: --timeout 2h
+    DO_RELEASE_SUMMARY: true
+    RELEASE_SUMMARY_EXTRA_OPTS: '-f release_summary.md'
+    DO_CHECK_POLICY: true         # Set to true to check for policy violations and fail build if any are found
+    DO_PR_COMMENT: true
+    PR_COMMENT_ACTION: fortify/gitlab-mr-comment.yaml  # GitLab MR comment action to use for reporting results in merge requests
+    PR_COMMENT_EXTRA_OPTS: --on-unsigned=ignore
+    DO_EXPORT: true
+
+# This is a sample job to deploy the application. You can replace it with your actual deploy job.
+gradle-deploy:
+  stage: deploy
+  needs:
+    - job: fortify-ast-scan
+    - job: env-prepare
+  script:
+    - echo "Deploying the application..."

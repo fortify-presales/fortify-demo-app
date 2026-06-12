@@ -1,0 +1,136 @@
+﻿# yaml-language-server $schema=https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json
+$schema: https://fortify.github.io/fcli/schemas/action/fcli-action-schema-2.8.0.json
+
+author: Fortify
+usage:
+  header: Check security policy. 
+  description: |
+    This action performs a custom policy check for the selected FoD release,
+    returning a non-zero exit code if any New Critical or High vulnerabilities
+    are present. Static, Dynamic, Open Source, and Mobile scan checks are enabled
+    by default unless a scan type list is supplied when invoking the action.
+
+config:
+  rest.target.default: fod
+      
+cli.options:
+  release:
+    names: --release, --rel
+    description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
+  scan-types:
+    names: --scan-types, --scan-type
+    description: Scan types to include in the policy check. Default Static, Dynamic, Open Source, Mobile.
+    type: array
+    required: false
+    default:
+      - Static
+      - Dynamic
+      - Open Source
+      - Mobile
+  
+steps:
+  - var.set:
+      rel: ${#fod.release(cli.release)}
+      checkStatic: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('static')}
+      checkDynamic: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('dynamic')}
+      checkOpenSource: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('open source')}
+      checkMobile: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('mobile')}
+  - if: ${checkStatic}
+    rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:Static
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.scantype=='Static' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
+          do:
+            - var.set:
+                blockingIssuesStatic..: "Static ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+                blockingIssues..: "Static ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+  - if: ${checkDynamic}
+    rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:Dynamic
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.scantype=='Dynamic' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
+          do:
+            - var.set:
+                blockingIssuesDynamic..: "Dynamic ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+                blockingIssues..: "Dynamic ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+  - if: ${checkOpenSource}
+    rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.scantype=='Open Source' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
+          do:
+            - var.set:
+                blockingIssuesOpenSource..: "Open Source ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+                blockingIssues..: "Open Source ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+  - if: ${checkMobile}
+    rest.call:
+      issues:
+        uri: /api/v3/releases/${rel.releaseId}/vulnerabilities?limit=50
+        query:
+          includeFixed: true
+          filters: scantype:Mobile
+        records.for-each:
+          record.var-name: issue
+          if: ${issue.scantype=='Mobile' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
+          do:
+            - var.set:
+                blockingIssuesMobile..: "Mobile ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+                blockingIssues..: "Mobile ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"
+  - var.set:
+      blockingIssuesStaticCount: "${blockingIssuesStatic==null ? 0 : blockingIssuesStatic.size()}"
+      blockingIssuesDynamicCount: "${blockingIssuesDynamic==null ? 0 : blockingIssuesDynamic.size()}"
+      blockingIssuesOpenSourceCount: "${blockingIssuesOpenSource==null ? 0 : blockingIssuesOpenSource.size()}"
+      blockingIssuesMobileCount: "${blockingIssuesMobile==null ? 0 : blockingIssuesMobile.size()}"
+      blockingIssueCount: "${blockingIssues==null ? 0 : blockingIssues.size()}"
+  - log.info: |
+      Fortify policy summary for release ${rel.applicationName}${#isNotBlank(rel.microserviceName)?' - '+rel.microserviceName:''} - ${rel.releaseName}
+      Static blocking issues: ${blockingIssuesStaticCount}
+      Dynamic blocking issues: ${blockingIssuesDynamicCount}
+      Open Source blocking issues: ${blockingIssuesOpenSourceCount}
+      Mobile blocking issues: ${blockingIssuesMobileCount}
+      Total blocking issues: ${blockingIssueCount}
+  - if: ${blockingIssueCount > 0}
+    log.info: |
+      Blocking issues:
+      ${#join('\n', blockingIssues)}
+  - check:
+      noNewCriticalOrHighStatic:
+        display-name: No New Critical or High Static issues
+        if: ${checkStatic}
+        ifSkipped: HIDE
+        pass.if: ${blockingIssuesStaticCount == 0}
+      noNewCriticalOrHighDynamic:
+        display-name: No New Critical or High Dynamic issues
+        if: ${checkDynamic}
+        ifSkipped: HIDE
+        pass.if: ${blockingIssuesDynamicCount == 0}
+      noNewCriticalOrHighOpenSource:
+        display-name: No New Critical or High Open Source issues
+        if: ${checkOpenSource}
+        ifSkipped: HIDE
+        pass.if: ${blockingIssuesOpenSourceCount == 0}
+      noNewCriticalOrHighMobile:
+        display-name: No New Critical or High Mobile issues
+        if: ${checkMobile}
+        ifSkipped: HIDE
+        pass.if: ${blockingIssuesMobileCount == 0}
+      noNewCriticalOrHigh:
+        display-name: No New Critical or High issues overall
+        pass.if: ${blockingIssueCount == 0}
+      
+
+

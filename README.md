@@ -6,7 +6,7 @@ This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
+This is a simple Spring Boot application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as those provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
 
 ## Technologies Used
 
@@ -82,20 +82,14 @@ No input validation or sanitization
 ## Building the Application
 
 ```bash
-# with a local Gradle installation
-gradle clean build
-
-# or using the Gradle wrapper (recommended if present)
+# Linux/UNIX example
 ./gradlew clean build
 ```
 
 ## Running the Application
 
 ```bash
-# with a local Gradle installation
-gradle bootRun
-
-# or using the Gradle wrapper (recommended if present)
+# Linux/UNIX example
 ./gradlew bootRun
 
 # or run the jar file:
@@ -105,7 +99,7 @@ java -jar build/libs/fortify-demo-app-1.0.0-SNAPSHOT.jar
 docker compose up --build -d
 ```
 
-The application will be available on `http://localhost:8080`, you can browse to the frontend at this address or the Backend API at `http://localhost:8080/swagger-ui/index.html`.
+The application frontend UI will then be available on `http://localhost:8080`, or you can browse to the backend API at `http://localhost:8080/swagger-ui/index.html`.
 
 ### Docker Compose + Entra Variables
 
@@ -183,6 +177,7 @@ Playwright is used for E2E testing of the frontend (React) application. These te
 If you wish to develop new features for the application you can start the backend and frontend up separately. To start the backend (without frontend):
 
 ```
+# Linux/UNIX example
 ./gradlew clean bootRun -PskipFrontend=true
 ```
 
