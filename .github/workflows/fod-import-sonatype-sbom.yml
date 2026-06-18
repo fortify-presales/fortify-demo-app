@@ -1,4 +1,4 @@
-name: Import Sonatype SBOM to FoD
+﻿name: Import Sonatype SBOM to FoD
 
 permissions:
   contents: read
@@ -29,7 +29,7 @@ jobs:
         with:
           fcli: bootstrapped
 
-      - name: Export CycloneDX SBOM from Nexus Lifecycle
+      - name: Export and enrich CycloneDX SBOM from Nexus Lifecycle
         env:
           NEXUS_LIFECYCLE_URL: ${{ vars.NEXUS_LIFECYCLE_URL }}
           NEXUS_LIFECYCLE_APP_ID: ${{ vars.NEXUS_LIFECYCLE_APP_ID }}
@@ -53,6 +53,7 @@ jobs:
             | python3 -c "import sys,json; apps=json.load(sys.stdin)['applications']; print(apps[0]['id'])")
 
           echo "Resolved internal app ID: ${internal_app_id}"
+          echo "NEXUS_INTERNAL_APP_ID=${internal_app_id}" >> "$GITHUB_ENV"
 
           # Step 2: Fetch the CycloneDX SBOM using the internal ID and version in path
           sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_CYCLONEDX_VERSION}/${internal_app_id}/stages/${NEXUS_LIFECYCLE_STAGE}"
@@ -65,7 +66,7 @@ jobs:
 
           test -s "${SBOM_FILE}"
 
-          # Step 3: Enrich SBOM vulnerabilities with Sonatype remediation recommendations
+          # Step 3: Enrich SBOM vulnerabilities with Sonatype remediation recommendations.
           # The remediation API is POST per-component; the script calls it concurrently.
           NEXUS_URL="${nexus_url}" \
           NEXUS_APP_ID="${internal_app_id}" \
@@ -74,6 +75,16 @@ jobs:
           NEXUS_PASSWORD="${NEXUS_LIFECYCLE_PASSWORD}" \
           SBOM_FILE="${SBOM_FILE}" \
           python3 .github/scripts/enrich-sbom-with-remediation.py
+
+          # Step 4: Sync Sonatype waivers — marks waived CVEs as 'not_affected' in the
+          # SBOM and writes waivers.json for the post-import FoD suppression step.
+          NEXUS_URL="${nexus_url}" \
+          NEXUS_APP_ID="${internal_app_id}" \
+          NEXUS_STAGE="${NEXUS_LIFECYCLE_STAGE}" \
+          NEXUS_USERNAME="${NEXUS_LIFECYCLE_USERNAME}" \
+          NEXUS_PASSWORD="${NEXUS_LIFECYCLE_PASSWORD}" \
+          SBOM_FILE="${SBOM_FILE}" \
+          python3 .github/scripts/sync-sonatype-waivers-to-fod.py
 
       - name: Import SBOM into FoD
         env:
@@ -94,6 +105,27 @@ jobs:
             --client-secret "${FOD_CLIENT_SECRET}"
 
           fcli fod oss-scan import --rel="${FOD_RELEASE}" -f="${SBOM_FILE}"
+
+      - name: Suppress waived CVEs in FoD
+        env:
+          FOD_RELEASE: ${{ env.FOD_RELEASE }}
+        run: |
+          set -euo pipefail
+
+          if [ ! -s waivers.json ]; then
+            echo "No waivers.json found - skipping suppression step"
+            exit 0
+          fi
+
+          waiver_count=$(python3 -c "import json; print(len(json.load(open('waivers.json')).get('waived_cves', [])))")
+          if [ "${waiver_count}" -eq 0 ]; then
+            echo "No waived CVEs to sync to FoD"
+            exit 0
+          fi
+
+          echo "Syncing ${waiver_count} Sonatype waivers to FoD..."
+          fcli fod issue list --rel="${FOD_RELEASE}" --output=json > fod-issues.json
+          FOD_RELEASE="${FOD_RELEASE}" python3 .github/scripts/suppress-fod-issues-from-waivers.py
 
       - name: Log out of FoD
         if: always()
