@@ -80,6 +80,9 @@ def has_waiver_marker(value) -> bool:
     return False
 
 
+def normalize_status(value) -> str:
+    return re.sub(r"[^A-Z0-9]", "", str(value).upper())
+
 # ---------------------------------------------------------------------------
 # Step 1: Get recent evaluation report IDs for this application + stage
 # ---------------------------------------------------------------------------
@@ -135,9 +138,71 @@ for report_id in report_ids[:5]:
                             "comment": waiver_comment,
                         }
                     )
-        print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ report")
+        print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ policy report {report_id}")
     except Exception as e:
         print(f"Warning: could not retrieve policy violations for report {report_id}: {e}", file=sys.stderr)
+
+    if waived_cves:
+        break
+
+    try:
+        raw = get_json(
+            f"{nexus_url}/api/v2/applications/{public_id}/reports/{report_id}/raw"
+        )
+        for component in raw.get("components", []):
+            purl = component.get("packageUrl", "") or component.get("componentIdentifier", {}).get("packageUrl", "")
+            if not purl:
+                continue
+            for issue in component.get("securityData", {}).get("securityIssues", []):
+                issue_status = normalize_status(issue.get("status", ""))
+                if issue_status not in ("WAIVED", "NOTAPPLICABLE"):
+                    continue
+                cve_ids = extract_cve_ids(issue.get("reference", ""))
+                for cve_id in extract_cve_ids(issue):
+                    cve_ids.add(cve_id)
+                waiver_comment = issue.get("customData", {}).get("remediation", "") or "Waived in Sonatype IQ"
+                for cve_id in cve_ids:
+                    waived_cves.append(
+                        {
+                            "cve_id": cve_id,
+                            "purl": purl,
+                            "comment": waiver_comment,
+                        }
+                    )
+        print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ raw report {report_id}")
+    except Exception as e:
+        print(f"Warning: could not retrieve raw report for {report_id}: {e}", file=sys.stderr)
+
+    if waived_cves:
+        break
+
+    try:
+        raw = get_json(
+            f"{nexus_url}/api/v2/applications/{public_id}/reports/{report_id}/raw"
+        )
+        for component in raw.get("components", []):
+            purl = component.get("packageUrl", "") or component.get("componentIdentifier", {}).get("packageUrl", "")
+            if not purl:
+                continue
+            for issue in component.get("securityData", {}).get("securityIssues", []):
+                issue_status = normalize_status(issue.get("status", ""))
+                if issue_status not in ("WAIVED", "NOTAPPLICABLE"):
+                    continue
+                cve_ids = extract_cve_ids(issue.get("reference", ""))
+                for cve_id in extract_cve_ids(issue):
+                    cve_ids.add(cve_id)
+                waiver_comment = issue.get("customData", {}).get("remediation", "") or "Waived in Sonatype IQ"
+                for cve_id in cve_ids:
+                    waived_cves.append(
+                        {
+                            "cve_id": cve_id,
+                            "purl": purl,
+                            "comment": waiver_comment,
+                        }
+                    )
+        print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ raw report {report_id}")
+    except Exception as e:
+        print(f"Warning: could not retrieve raw report for {report_id}: {e}", file=sys.stderr)
 
 if not waived_cves and report_ids:
     print(f"No waivers found in the {min(5, len(report_ids))} most recent {stage} report(s)")
