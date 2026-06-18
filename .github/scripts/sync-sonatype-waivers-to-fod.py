@@ -23,6 +23,7 @@ Output file: waivers.json
 import base64
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -43,6 +44,20 @@ def get_json(url: str) -> dict:
     req = urllib.request.Request(url, headers=auth_headers)
     with urllib.request.urlopen(req, timeout=30) as resp:
         return json.loads(resp.read())
+
+
+def extract_cve_ids(value) -> list[str]:
+    """Return unique CVE IDs found anywhere in the given value."""
+    matches = []
+    if isinstance(value, str):
+        matches.extend(re.findall(r"CVE-\d{4}-\d{4,7}", value, flags=re.IGNORECASE))
+    elif isinstance(value, dict):
+        for nested in value.values():
+            matches.extend(extract_cve_ids(nested))
+    elif isinstance(value, list):
+        for nested in value:
+            matches.extend(extract_cve_ids(nested))
+    return list(dict.fromkeys(match.upper() for match in matches))
 
 
 # ---------------------------------------------------------------------------
@@ -82,20 +97,20 @@ if report_id:
                 if not violation.get("waived", False):
                     continue
                 waiver_comment = violation.get("waiverComment", "") or "Waived in Sonatype IQ"
-                # Extract CVE IDs from policy constraints
+                # Extract CVE IDs from any condition field Sonatype provides.
+                cve_ids = set()
                 for constraint in violation.get("constraints", []):
-                    for condition in constraint.get("conditions", []):
-                        value = str(
-                            condition.get("conditionValue", {}).get("value", "")
-                        )
-                        if value.upper().startswith("CVE-"):
-                            waived_cves.append(
-                                {
-                                    "cve_id": value.upper(),
-                                    "purl": purl,
-                                    "comment": waiver_comment,
-                                }
-                            )
+                    cve_ids.update(extract_cve_ids(constraint))
+                cve_ids.update(extract_cve_ids(violation))
+
+                for cve_id in cve_ids:
+                    waived_cves.append(
+                        {
+                            "cve_id": cve_id,
+                            "purl": purl,
+                            "comment": waiver_comment,
+                        }
+                    )
         print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ report")
     except Exception as e:
         print(f"Warning: could not retrieve policy violations: {e}", file=sys.stderr)
