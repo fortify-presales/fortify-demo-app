@@ -1,0 +1,88 @@
+name: Import Sonatype SBOM to FoD
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Placeholder schedule: adjust before relying on this in production.
+    - cron: '0 3 * * *'
+
+env:
+  FOD_RELEASE: ${{ vars.FOD_RELEASE || 'Fortify Demo App:main' }}
+  NEXUS_CYCLONEDX_VERSION: '1.6'
+  NEXUS_LIFECYCLE_STAGE: build
+  SBOM_FILE: sonatype-sbom.cdx.json
+
+jobs:
+  import-sonatype-sbom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up fcli
+        uses: fortify/github-action/setup@v3
+        with:
+          fcli: bootstrapped
+
+      - name: Export CycloneDX SBOM from Nexus Lifecycle
+        env:
+          NEXUS_LIFECYCLE_URL: ${{ vars.NEXUS_LIFECYCLE_URL }}
+          NEXUS_LIFECYCLE_APP_ID: ${{ vars.NEXUS_LIFECYCLE_APP_ID }}
+          NEXUS_LIFECYCLE_USERNAME: ${{ secrets.NEXUS_LIFECYCLE_USERNAME }}
+          NEXUS_LIFECYCLE_PASSWORD: ${{ secrets.NEXUS_LIFECYCLE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          : "${NEXUS_LIFECYCLE_URL:?NEXUS_LIFECYCLE_URL repository variable is required}"
+          : "${NEXUS_LIFECYCLE_APP_ID:?NEXUS_LIFECYCLE_APP_ID repository variable is required}"
+          : "${NEXUS_LIFECYCLE_USERNAME:?NEXUS_LIFECYCLE_USERNAME secret is required}"
+          : "${NEXUS_LIFECYCLE_PASSWORD:?NEXUS_LIFECYCLE_PASSWORD secret is required}"
+
+          nexus_url="${NEXUS_LIFECYCLE_URL%/}"
+          sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_CYCLONEDX_VERSION}/${NEXUS_LIFECYCLE_APP_ID}/stages/${NEXUS_LIFECYCLE_STAGE}"
+
+          curl --fail-with-body --location --show-error --silent \
+            --user "${NEXUS_LIFECYCLE_USERNAME}:${NEXUS_LIFECYCLE_PASSWORD}" \
+            --header "Accept: application/json" \
+            --output "${SBOM_FILE}" \
+            "${sbom_url}"
+
+          test -s "${SBOM_FILE}"
+
+      - name: Import SBOM into FoD
+        env:
+          FOD_URL: ${{ vars.FOD_URL }}
+          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
+          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
+        run: |
+          set -euo pipefail
+
+          : "${FOD_URL:?FOD_URL repository variable is required}"
+          : "${FOD_CLIENT_ID:?FOD_CLIENT_ID secret is required}"
+          : "${FOD_CLIENT_SECRET:?FOD_CLIENT_SECRET secret is required}"
+          : "${FOD_RELEASE:?FOD_RELEASE is required}"
+
+          fcli fod session login \
+            --url "${FOD_URL}" \
+            --client-id "${FOD_CLIENT_ID}" \
+            --client-secret "${FOD_CLIENT_SECRET}"
+
+          fcli fod oss-scan import --rel="${FOD_RELEASE}" -f="${SBOM_FILE}"
+
+      - name: Log out of FoD
+        if: always()
+        run: fcli fod session logout || true
+
+      - name: Upload SBOM artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonatype-cyclonedx-sbom
+          path: ${{ env.SBOM_FILE }}
+          if-no-files-found: ignore
+          retention-days: 7
