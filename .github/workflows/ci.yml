@@ -7,8 +7,12 @@ permissions:
 on:
   push:
     branches: [ main, feature/**, bugfix/** ]
+    paths-ignore:
+      - '.github/workflows/fod-import-sonatype-sbom.yml'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '.github/workflows/fod-import-sonatype-sbom.yml'
   workflow_dispatch:
 
 jobs:

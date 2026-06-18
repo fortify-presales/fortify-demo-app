@@ -44,11 +44,11 @@ jobs:
           : "${NEXUS_LIFECYCLE_PASSWORD:?NEXUS_LIFECYCLE_PASSWORD secret is required}"
 
           nexus_url="${NEXUS_LIFECYCLE_URL%/}"
-          sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_CYCLONEDX_VERSION}/${NEXUS_LIFECYCLE_APP_ID}/stages/${NEXUS_LIFECYCLE_STAGE}"
+          sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_LIFECYCLE_APP_ID}/stages/${NEXUS_LIFECYCLE_STAGE}"
 
           curl --fail-with-body --location --show-error --silent \
             --user "${NEXUS_LIFECYCLE_USERNAME}:${NEXUS_LIFECYCLE_PASSWORD}" \
-            --header "Accept: application/json" \
+            --header "Accept: application/vnd.cyclonedx+json; version=${NEXUS_CYCLONEDX_VERSION}" \
             --output "${SBOM_FILE}" \
             "${sbom_url}"
 
