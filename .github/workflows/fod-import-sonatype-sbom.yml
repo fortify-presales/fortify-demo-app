@@ -44,7 +44,18 @@ jobs:
           : "${NEXUS_LIFECYCLE_PASSWORD:?NEXUS_LIFECYCLE_PASSWORD secret is required}"
 
           nexus_url="${NEXUS_LIFECYCLE_URL%/}"
-          sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_LIFECYCLE_APP_ID}/stages/${NEXUS_LIFECYCLE_STAGE}?exportCycloneDxVersion=${NEXUS_CYCLONEDX_VERSION}"
+
+          # Step 1: Resolve the internal application ID from the public ID
+          internal_app_id=$(curl --fail-with-body --location --show-error --silent \
+            --user "${NEXUS_LIFECYCLE_USERNAME}:${NEXUS_LIFECYCLE_PASSWORD}" \
+            --header "Accept: application/json" \
+            "${nexus_url}/api/v2/applications?publicId=${NEXUS_LIFECYCLE_APP_ID}" \
+            | python3 -c "import sys,json; apps=json.load(sys.stdin)['applications']; print(apps[0]['id'])")
+
+          echo "Resolved internal app ID: ${internal_app_id}"
+
+          # Step 2: Fetch the CycloneDX SBOM using the internal ID and version in path
+          sbom_url="${nexus_url}/api/v2/cycloneDx/${NEXUS_CYCLONEDX_VERSION}/${internal_app_id}/stages/${NEXUS_LIFECYCLE_STAGE}"
 
           curl --fail-with-body --location --show-error --silent \
             --user "${NEXUS_LIFECYCLE_USERNAME}:${NEXUS_LIFECYCLE_PASSWORD}" \
