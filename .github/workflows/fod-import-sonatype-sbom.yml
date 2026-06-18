@@ -65,6 +65,16 @@ jobs:
 
           test -s "${SBOM_FILE}"
 
+          # Step 3: Enrich SBOM vulnerabilities with Sonatype remediation recommendations
+          # The remediation API is POST per-component; the script calls it concurrently.
+          NEXUS_URL="${nexus_url}" \
+          NEXUS_APP_ID="${internal_app_id}" \
+          NEXUS_STAGE="${NEXUS_LIFECYCLE_STAGE}" \
+          NEXUS_USERNAME="${NEXUS_LIFECYCLE_USERNAME}" \
+          NEXUS_PASSWORD="${NEXUS_LIFECYCLE_PASSWORD}" \
+          SBOM_FILE="${SBOM_FILE}" \
+          python3 .github/scripts/enrich-sbom-with-remediation.py
+
       - name: Import SBOM into FoD
         env:
           FOD_URL: ${{ vars.FOD_URL }}
