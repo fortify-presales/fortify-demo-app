@@ -60,6 +60,26 @@ def extract_cve_ids(value) -> list[str]:
     return list(dict.fromkeys(match.upper() for match in matches))
 
 
+def has_waiver_marker(value) -> bool:
+    """Return True if Sonatype waiver markers appear anywhere in the value."""
+    if isinstance(value, dict):
+        for key, nested in value.items():
+            normalized_key = str(key).lower()
+            if normalized_key in ("waived", "waivedwithautowaiver", "waivetime"):
+                if normalized_key == "waivetime":
+                    if nested:
+                        return True
+                elif bool(nested):
+                    return True
+            if has_waiver_marker(nested):
+                return True
+    elif isinstance(value, list):
+        for nested in value:
+            if has_waiver_marker(nested):
+                return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Step 1: Get the latest evaluation report ID for this application + stage
 # ---------------------------------------------------------------------------
@@ -94,7 +114,7 @@ if report_id:
                 or component.get("packageUrl", "")
             )
             for violation in component.get("violations", []):
-                if not violation.get("waived", False):
+                if not (violation.get("waived", False) or violation.get("waivedWithAutoWaiver", False) or has_waiver_marker(violation)):
                     continue
                 waiver_comment = violation.get("waiverComment", "") or "Waived in Sonatype IQ"
                 # Extract CVE IDs from any condition field Sonatype provides.
