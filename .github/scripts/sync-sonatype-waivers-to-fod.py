@@ -10,6 +10,7 @@ For each CVE that is waived in Sonatype IQ, this script:
 Required environment variables:
   NEXUS_URL       - Base URL of the Nexus IQ Server
   NEXUS_APP_ID    - Internal application ID (UUID)
+    NEXUS_PUBLIC_ID - Public application ID used by the policy report endpoint
   NEXUS_STAGE     - Stage ID (e.g. "build")
   NEXUS_USERNAME  - IQ Server username
   NEXUS_PASSWORD  - IQ Server password
@@ -28,6 +29,7 @@ import urllib.request
 
 nexus_url = os.environ["NEXUS_URL"].rstrip("/")
 app_id    = os.environ["NEXUS_APP_ID"]
+public_id = os.environ["NEXUS_PUBLIC_ID"]
 stage     = os.environ["NEXUS_STAGE"]
 username  = os.environ["NEXUS_USERNAME"]
 password  = os.environ["NEXUS_PASSWORD"]
@@ -48,15 +50,15 @@ def get_json(url: str) -> dict:
 # ---------------------------------------------------------------------------
 report_id = None
 try:
-    reports = get_json(f"{nexus_url}/api/v2/reports/applications/{app_id}")
-    summaries = reports.get("applicationCompositionReportSummaries", [])
-    if summaries:
+    reports = get_json(f"{nexus_url}/api/v2/reports/applications/{app_id}/history?stage={stage}&limit=1")
+    policy_evaluations = reports.get("policyEvaluations", [])
+    if policy_evaluations:
         # The report HTML URL contains the scan/report ID:
         # e.g. /ui/links/application/{appId}/report/{reportId}
-        html_url = summaries[0].get("reportHtmlUrl", "")
+        html_url = policy_evaluations[0].get("reportHtmlUrl", "")
         if "/report/" in html_url:
             report_id = html_url.split("/report/")[-1].split("?")[0]
-            print(f"Latest report ID: {report_id}")
+            print(f"Latest {stage} report ID: {report_id}")
 except Exception as e:
     print(f"Warning: could not retrieve application reports: {e}", file=sys.stderr)
 
@@ -68,7 +70,7 @@ waived_cves: list[dict] = []
 if report_id:
     try:
         policy = get_json(
-            f"{nexus_url}/api/v2/applications/{app_id}/reports/{report_id}/policy"
+            f"{nexus_url}/api/v2/applications/{public_id}/reports/{report_id}/policy"
         )
         for component in policy.get("components", []):
             purl = (

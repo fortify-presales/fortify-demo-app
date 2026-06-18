@@ -80,6 +80,7 @@ jobs:
           # SBOM and writes waivers.json for the post-import FoD suppression step.
           NEXUS_URL="${nexus_url}" \
           NEXUS_APP_ID="${internal_app_id}" \
+          NEXUS_PUBLIC_ID="${NEXUS_LIFECYCLE_APP_ID}" \
           NEXUS_STAGE="${NEXUS_LIFECYCLE_STAGE}" \
           NEXUS_USERNAME="${NEXUS_LIFECYCLE_USERNAME}" \
           NEXUS_PASSWORD="${NEXUS_LIFECYCLE_PASSWORD}" \
