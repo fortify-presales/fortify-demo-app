@@ -81,19 +81,21 @@ def has_waiver_marker(value) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Step 1: Get the latest evaluation report ID for this application + stage
+# Step 1: Get recent evaluation report IDs for this application + stage
 # ---------------------------------------------------------------------------
-report_id = None
+report_ids = []
 try:
-    reports = get_json(f"{nexus_url}/api/v2/reports/applications/{app_id}/history?stage={stage}&limit=1")
+    reports = get_json(f"{nexus_url}/api/v2/reports/applications/{app_id}/history?stage={stage}&limit=5")
     policy_evaluations = reports.get("policyEvaluations", [])
     if policy_evaluations:
-        # The report HTML URL contains the scan/report ID:
-        # e.g. /ui/links/application/{appId}/report/{reportId}
-        html_url = policy_evaluations[0].get("reportHtmlUrl", "")
-        if "/report/" in html_url:
-            report_id = html_url.split("/report/")[-1].split("?")[0]
-            print(f"Latest {stage} report ID: {report_id}")
+        for evaluation in policy_evaluations:
+            # The report HTML URL contains the scan/report ID:
+            # e.g. /ui/links/application/{appId}/report/{reportId}
+            html_url = evaluation.get("reportHtmlUrl", "")
+            if "/report/" in html_url:
+                report_ids.append(html_url.split("/report/")[-1].split("?")[0])
+        if report_ids:
+            print(f"Latest {stage} report ID: {report_ids[0]}")
 except Exception as e:
     print(f"Warning: could not retrieve application reports: {e}", file=sys.stderr)
 
@@ -102,7 +104,9 @@ except Exception as e:
 # ---------------------------------------------------------------------------
 waived_cves: list[dict] = []
 
-if report_id:
+for report_id in report_ids[:5]:
+    if waived_cves:
+        break
     try:
         policy = get_json(
             f"{nexus_url}/api/v2/applications/{public_id}/reports/{report_id}/policy"
@@ -133,7 +137,10 @@ if report_id:
                     )
         print(f"Found {len(waived_cves)} waived CVEs in Sonatype IQ report")
     except Exception as e:
-        print(f"Warning: could not retrieve policy violations: {e}", file=sys.stderr)
+        print(f"Warning: could not retrieve policy violations for report {report_id}: {e}", file=sys.stderr)
+
+if not waived_cves and report_ids:
+    print(f"No waivers found in the {min(5, len(report_ids))} most recent {stage} report(s)")
 
 # ---------------------------------------------------------------------------
 # Step 3: Also check the SBOM for existing analysis states (belt-and-suspenders)
