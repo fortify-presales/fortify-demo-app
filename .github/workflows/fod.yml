@@ -1,6 +1,6 @@
 # Create GitHub Action Repository Variables for your version of the application:
 #   FOD_URL                     - FoD Portal URL for your tenant (e.g. https://ams.fortify.com)
-#   DEFAULT_APP_NAME            - Optional FoD app name override (defaults to repository name if unset)
+#   FOD_DEFAULT_APP_NAME        - Optional FoD app name override (defaults to repository name if unset)
 #   FOD_DEFAULT_OWNER           - Optional FoD app owner user id override (fallback omits --app-owner)
 #   FOD_DEFAULT_ASSESSMENT_TYPE - Optional assessment type override (defaults to "Static Assessment")
 #   FOD_ALLOW_SETUP_WITHOUT_OWNER - Optional override (true/false). If true, skip owner preflight failure.
@@ -28,7 +28,7 @@ on:
 
 # Global environment variables
 env:
-  DEFAULT_APP_NAME: ${{ vars.DEFAULT_APP_NAME || github.event.repository.name }}
+  DEFAULT_APP_NAME: ${{ vars.FOD_DEFAULT_APP_NAME || github.event.repository.name }}
   JAVA_VERSION: "17"
 
 jobs:
