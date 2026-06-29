@@ -101,6 +101,6 @@ jobs:
           DO_SCA_SCAN: true
           DO_WAIT: true
           DO_CHECK_POLICY: true
-          DO_RELEASE_SUMMARY: true
+          DO_RELEASE_SUMMARY: false
           DO_PR_COMMENT: true
           DO_SAST_EXPORT: true
