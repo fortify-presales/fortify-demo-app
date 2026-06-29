@@ -110,7 +110,7 @@ jobs:
           FOD_CLIENT_ID: ${{secrets.FOD_CLIENT_ID}}
           FOD_CLIENT_SECRET: ${{secrets.FOD_CLIENT_SECRET}}
           SETUP_EXTRA_OPTS: ${{ vars.FOD_DEFAULT_OWNER && format('--sdlc-status Development --app-owner {0}', vars.FOD_DEFAULT_OWNER) || '--sdlc-status Development' }}
-          PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test" -oss
+          PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test"
           COPY_FROM_RELEASE: ${{ env.FOD_PARENT_RELEASE }}
           SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE || 'Static Assessment' }}
           SAST_WAIT_EXTRA_OPTS: --timeout 3h
