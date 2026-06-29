@@ -86,6 +86,7 @@ jobs:
         timeout-minutes: 360
         uses: fortify/github-action@v3
         env:
+          FCLI_BOOTSTRAP_VERSION: dev_feat.v3.x.pr-comment
           FOD_URL: ${{ vars.FOD_URL }}
           FOD_CLIENT_ID: ${{secrets.FOD_CLIENT_ID}}
           FOD_CLIENT_SECRET: ${{secrets.FOD_CLIENT_SECRET}}

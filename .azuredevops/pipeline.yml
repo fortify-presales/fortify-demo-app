@@ -1,0 +1,234 @@
+# NOTE for self-hosted agents:
+# JavaToolInstaller@0 with jdkSourceOption: PreInstalled expects JDK 17 to already be installed.
+# If JDK 17 is missing, install it and ensure the agent exposes Java capabilities/environment
+# so JAVA_HOME can be resolved by the task.
+
+trigger:
+- main
+- develop
+- feature/*
+- hotfix/*
+
+pr:
+- main
+- develop
+
+variables:
+  DEFAULT_APP_NAME: 'Fortify Demo App'
+  DEFAULT_PARENT_RELEASE_NAME: main
+  JDK_VERSION: '17'
+
+stages:
+- stage: Build
+  displayName: Build and Test
+
+  jobs:
+  - job: BuildTest
+    displayName: Build and Test
+
+    pool:
+      # To use a Microsoft-hosted agent, uncomment the following line and comment out the 'name' line
+      #vmImage: windows-latest
+      # To use a self-hosted agent, uncomment the following line and set the agent pool name, then comment out the 'vmImage' line
+      name: 'Default'
+
+    steps:
+    - task: JavaToolInstaller@0
+      displayName: Use JDK $(JDK_VERSION)
+      inputs:
+        versionSpec: '$(JDK_VERSION)'
+        jdkArchitectureOption: x64
+        jdkSourceOption: PreInstalled
+
+    - powershell: |
+        if (-not $env:JAVA_HOME) {
+          throw "JAVA_HOME is not set. Ensure JDK $(JDK_VERSION) is available on this agent."
+        }
+        $javaExe = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (-not (Test-Path $javaExe)) {
+          throw "JAVA_HOME is set to '$env:JAVA_HOME' but java.exe was not found at '$javaExe'."
+        }
+        & $javaExe -version
+      displayName: Validate JAVA_HOME
+
+    - task: Cache@2
+      displayName: Cache Gradle packages
+      inputs:
+        key: 'gradle | "$(Agent.OS)" | **/gradle-wrapper.properties | **/*.gradle*'
+        restoreKeys: |
+          gradle | "$(Agent.OS)"
+        path: $(USERPROFILE)\.gradle
+
+    - task: Gradle@3
+      displayName: Run tests
+      inputs:
+        gradleWrapperFile: gradlew
+        tasks: test
+        options: --no-daemon
+        publishJUnitResults: true
+        testResultsFiles: 'build/test-results/test/**/TEST-*.xml'
+        javaHomeOption: JDKVersion
+        jdkVersionOption: '1.17'
+        jdkArchitectureOption: x64
+
+    - task: Gradle@3
+      displayName: Build (assemble, skip tests)
+      inputs:
+        gradleWrapperFile: gradlew
+        tasks: clean build
+        options: -x test --no-daemon -PskipFrontend=true
+        publishJUnitResults: false
+        javaHomeOption: JDKVersion
+        jdkVersionOption: '1.17'
+        jdkArchitectureOption: x64
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish build artifacts
+      inputs:
+        PathtoPublish: build/libs
+        ArtifactName: jar
+
+- stage: Scan
+  displayName: Fortify AST Scan
+  dependsOn: Build
+
+  jobs:
+  - job: FortifyASTScan
+    displayName: Fortify AST Scan
+
+    pool:
+      # To use a Microsoft-hosted agent, uncomment the following line and comment out the 'name' line
+      #vmImage: windows-latest
+      # To use a self-hosted agent, uncomment the following line and set the agent pool name, then comment out the 'vmImage' line
+      name: 'Default'
+
+    variables:
+      # Set FOD_URL, FOD_CLIENT_ID, FOD_CLIENT_SECRET, FOD_DEFAULT_OWNER as secret pipeline variables in Azure DevOps
+      FOD_RELEASE: $(DEFAULT_APP_NAME):$(Build.SourceBranchName)-ado
+      FOD_PARENT_RELEASE: $(DEFAULT_APP_NAME):$(DEFAULT_PARENT_RELEASE_NAME)-ado
+      FOD_DEFAULT_ASSESSMENT_TYPE: 'Static Assessment'
+
+    steps:
+    - checkout: self
+      fetchDepth: 0
+
+    - task: JavaToolInstaller@0
+      displayName: Use JDK $(JDK_VERSION)
+      inputs:
+        versionSpec: '$(JDK_VERSION)'
+        jdkArchitectureOption: x64
+        jdkSourceOption: PreInstalled
+
+    - powershell: |
+        if (-not $env:JAVA_HOME) {
+          throw "JAVA_HOME is not set. Ensure JDK $(JDK_VERSION) is available on this agent."
+        }
+        $javaExe = Join-Path $env:JAVA_HOME "bin\java.exe"
+        if (-not (Test-Path $javaExe)) {
+          throw "JAVA_HOME is set to '$env:JAVA_HOME' but java.exe was not found at '$javaExe'."
+        }
+        & $javaExe -version
+      displayName: Validate JAVA_HOME
+
+    - task: NodeTool@0
+      displayName: Set up Node.js
+      inputs:
+        versionSpec: '22.x'
+
+    - task: PowerShell@2
+      displayName: 'Install Fortify CLI via @fortify/setup'
+      inputs:
+        targetType: 'inline'
+        workingDirectory: '$(Build.SourcesDirectory)'
+        script: |
+          $ErrorActionPreference = "Stop"
+          $baseDir = "$env:AGENT_TEMPDIRECTORY\.fortify"
+          New-Item -ItemType Directory -Force -Path $baseDir | Out-Null
+          #npx @fortify/setup@latest bootstrap-config --cache-dir "$baseDir\fcli\bootstrap" --fcli-version=YOUR_CUSTOM_VERSION
+          npx @fortify/setup@v2 env init --tools=fcli:bootstrapped
+          npx @fortify/setup@v2 env powershell
+          npx @fortify/setup@v2 env ado 
+
+    - task: PowerShell@2
+      displayName: 'Set FoD CI variables for PR/non-PR'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $ErrorActionPreference = "Stop"
+
+          $isPr = "$(Build.Reason)" -eq "PullRequest"
+          $parentRelease = "$(DEFAULT_APP_NAME):$(DEFAULT_PARENT_RELEASE_NAME)-ado"
+
+          if ($isPr) {
+            $release = "$(DEFAULT_APP_NAME):PR$(System.PullRequest.PullRequestId)-ado"
+            $doPrComment = "true"
+          }
+          else {
+            $release = "$(DEFAULT_APP_NAME):$(Build.SourceBranchName)-ado"
+            $doPrComment = "false"
+          }
+
+          Write-Host "##vso[task.setvariable variable=FOD_RELEASE_RUNTIME]$release"
+          Write-Host "##vso[task.setvariable variable=FOD_PARENT_RELEASE_RUNTIME]$parentRelease"
+          Write-Host "##vso[task.setvariable variable=DO_PR_COMMENT_RUNTIME]$doPrComment"
+
+    - task: PowerShell@2
+      displayName: 'Run FoD CI Scan'
+      inputs:
+        targetType: 'inline'
+        workingDirectory: '$(Build.SourcesDirectory)'
+        script: |
+          $ErrorActionPreference = "Stop"
+          fcli action run ci
+      env:
+        # SYSTEM_ACCESSTOKEN must be explicitly mapped - ADO withholds it by default
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+        FOD_URL: $(FOD_URL)
+        FOD_CLIENT_ID: $(FOD_CLIENT_ID)
+        FOD_CLIENT_SECRET: $(FOD_CLIENT_SECRET)
+        FOD_APP_NAME: $(DEFAULT_APP_NAME)
+        FOD_RELEASE: $(FOD_RELEASE_RUNTIME)
+        FOD_PARENT_RELEASE: $(FOD_PARENT_RELEASE_RUNTIME)
+        SAST_ASSESSMENT_TYPE: "$(FOD_DEFAULT_ASSESSMENT_TYPE)"
+        SETUP_EXTRA_OPTS: --sdlc-status Development --app-owner "$(FOD_DEFAULT_OWNER)" --copy-from "$(DEFAULT_APP_NAME):$(DEFAULT_PARENT_RELEASE_NAME)-ado" --use-aviator
+        PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -PskipFrontend=true"
+        DO_SETUP: true
+        DO_SAST_SCAN: true
+        DO_AVIATOR_AUDIT: false
+        DO_SCA_SCAN: false
+        DO_WAIT: true
+        SAST_WAIT_EXTRA_OPTS: --timeout 2h
+        DO_JOB_SUMMARY: true
+        DO_EXPORT: true
+        DO_CHECK_POLICY: true
+        DO_PR_COMMENT: $(DO_PR_COMMENT_RUNTIME)
+        DO_RELEASE_SUMMARY: true
+        RELEASE_SUMMARY_EXTRA_OPTS: -f release_summary.md
+        #RELEASE_SUMMARY_ACTION: fortify/ado-pr-comment.yaml
+        #RELEASE_SUMMARY_EXTRA_OPTS: --on-unsigned=ignore
+        #PR_COMMENT_ACTION: fortify/ado-pr-comment.yaml  # ADO PR comment action to use for reporting results in pull requests
+        #PR_COMMENT_EXTRA_OPTS: --on-unsigned=ignore
+        #CHECK_POLICY_ACTION: fortify/check-pr-policy.yaml
+        #CHECK_POLICY_EXTRA_OPTS: --on-unsigned=ignore --scan-types Static
+
+    - powershell: |
+        if (Test-Path "$(Build.SourcesDirectory)\release_summary.md") {
+          Write-Host "##vso[task.setvariable variable=ReleaseSummaryExists]true"
+        } else {
+          Write-Host "##vso[task.setvariable variable=ReleaseSummaryExists]false"
+        }
+      displayName: Detect release summary file
+      condition: always()
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish release summary
+      condition: and(always(), eq(variables['ReleaseSummaryExists'], 'true'))
+      inputs:
+        PathtoPublish: $(Build.SourcesDirectory)\release_summary.md
+        ArtifactName: fortify-release-summary
+        PublishLocation: Container
+
+    - powershell: |
+        Write-Host "##vso[task.uploadsummary]$(Build.SourcesDirectory)\release_summary.md"
+      displayName: Upload release summary to run summary
+      condition: and(always(), eq(variables['ReleaseSummaryExists'], 'true'))
