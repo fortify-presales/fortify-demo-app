@@ -1,7 +1,9 @@
 # Create GitHub Action Repository Variables for your version of the application:
 #   FOD_URL                     - FoD Portal URL for your tenant (e.g. https://ams.fortify.com)
-#   FOD_DEFAULT_OWNER           - The user id of the Application Owner (only needed if an application does not already exist)
-#   FOD_DEFAULT_ASSESSMENT_TYPE - The default Assessment Type to use, e.g. "Static Assessment"
+#   FOD_DEFAULT_APP_NAME        - Optional FoD app name override (defaults to repository name if unset)
+#   FOD_DEFAULT_OWNER           - Optional FoD app owner user id override (fallback omits --app-owner)
+#   FOD_DEFAULT_ASSESSMENT_TYPE - Optional assessment type override (defaults to "Static Assessment")
+#   FOD_ALLOW_SETUP_WITHOUT_OWNER - Optional override (true/false). If true, skip owner preflight failure.
 # Create GitHub Action Secrets for your version of the application:
 #   FOD_CLIENT_ID should be an API Key obtained from your FoD tenant.
 #   FOD_CLIENT_SECRET should be the secret for the API Key obtained for your FoD tenant.
@@ -9,7 +11,7 @@
 #   API Key credentials can be obtained from your FoD tenant, under Administration -> Settings -> API
 #   It is recommended to create credentials with 'Security Lead' Role selected.
 #   "Automated Audit preference" should be configured for the release's Static Scan Settings.
-name: OpenText Core Application Security Scan
+name: Fortify on Demand Security Scan
 
 # Set the permissions for the GITHUB_TOKEN to allow the workflow to read repository contents, write security events, and write pull request comments. This is necessary for the workflow to function properly, as it needs to access the codebase for scanning, report security findings, and comment on pull requests with the results.
 permissions:
@@ -26,10 +28,8 @@ on:
 
 # Global environment variables
 env:
-  DEFAULT_APP_NAME: "Fortify Demo App"
-  DEFAULT_PARENT_RELEASE_NAME: "main"
+  DEFAULT_APP_NAME: ${{ vars.FOD_DEFAULT_APP_NAME || github.event.repository.name }}
   JAVA_VERSION: "17"
-  BASE_DIR: "."
 
 jobs:
   Prepare:
@@ -46,11 +46,11 @@ jobs:
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "Running in a pull request pipeline ..."
             echo "FOD_RELEASE=${{ env.DEFAULT_APP_NAME }}:merge-to-${{ github.base_ref }}#PR${{ github.event.number }}" >> $GITHUB_OUTPUT
-            echo "FOD_PARENT_RELEASE=${{ env.DEFAULT_APP_NAME }}:${{ github.head_ref }}" >> $GITHUB_OUTPUT
+            echo "FOD_PARENT_RELEASE=${{ env.DEFAULT_APP_NAME }}:${{ github.base_ref }}" >> $GITHUB_OUTPUT
           else
             echo "Running in a branch pipeline ..."
             echo "FOD_RELEASE=${{ env.DEFAULT_APP_NAME }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            echo "FOD_PARENT_RELEASE=${{ env.DEFAULT_APP_NAME }}:${{ env.DEFAULT_PARENT_RELEASE_NAME }}" >> $GITHUB_OUTPUT
+            echo "FOD_PARENT_RELEASE=${{ env.DEFAULT_APP_NAME }}:${{ github.event.repository.default_branch }}" >> $GITHUB_OUTPUT
           fi 
 
   fortify-ast-scan:
@@ -79,6 +79,25 @@ jobs:
             ${{ runner.os }}-gradle-
       - name: Grant execute permission for Gradle wrapper
         run: chmod +x gradlew || true
+      - name: Preflight FoD setup inputs
+        shell: bash
+        env:
+          FOD_DEFAULT_OWNER: ${{ vars.FOD_DEFAULT_OWNER }}
+          FOD_ALLOW_SETUP_WITHOUT_OWNER: ${{ vars.FOD_ALLOW_SETUP_WITHOUT_OWNER || 'false' }}
+          FOD_RELEASE: ${{ env.FOD_RELEASE }}
+          FOD_PARENT_RELEASE: ${{ env.FOD_PARENT_RELEASE }}
+        run: |
+          if [[ -z "${FOD_DEFAULT_OWNER}" ]]; then
+            if [[ "${FOD_ALLOW_SETUP_WITHOUT_OWNER,,}" == "true" ]]; then
+              echo "::warning title=Missing FOD_DEFAULT_OWNER::Proceeding without --app-owner because FOD_ALLOW_SETUP_WITHOUT_OWNER=true."
+            else
+              echo "::error title=Missing FOD_DEFAULT_OWNER::Set repository variable FOD_DEFAULT_OWNER or set FOD_ALLOW_SETUP_WITHOUT_OWNER=true if setup is not expected to create a new application."
+              echo "::error::Release=${FOD_RELEASE}, ParentRelease=${FOD_PARENT_RELEASE}"
+              exit 1
+            fi
+          else
+            echo "Using FOD_DEFAULT_OWNER for setup."
+          fi
       #
       # See: https://fortify.github.io/fcli/v3/ci/github/v3.0.x/ast-action-fod.html
       #
@@ -86,14 +105,14 @@ jobs:
         timeout-minutes: 360
         uses: fortify/github-action@v3
         env:
-          FCLI_BOOTSTRAP_VERSION: dev_feat.v3.x.pr-comment
+          #FCLI_BOOTSTRAP_VERSION: YOUR_CUSTOM_FCLI_BOOTSTRAP_VERSION
           FOD_URL: ${{ vars.FOD_URL }}
           FOD_CLIENT_ID: ${{secrets.FOD_CLIENT_ID}}
           FOD_CLIENT_SECRET: ${{secrets.FOD_CLIENT_SECRET}}
-          SETUP_EXTRA_OPTS: ${{ format('--sdlc-status Development --app-owner {0}', vars.FOD_DEFAULT_OWNER) }}
+          SETUP_EXTRA_OPTS: ${{ vars.FOD_DEFAULT_OWNER && format('--sdlc-status Development --app-owner {0}', vars.FOD_DEFAULT_OWNER) || '--sdlc-status Development' }}
           PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test"
           COPY_FROM_RELEASE: ${{ env.FOD_PARENT_RELEASE }}
-          SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE }}
+          SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE || 'Static Assessment' }}
           SAST_WAIT_EXTRA_OPTS: --timeout 3h
           DO_SETUP: true
           DO_SAST_SCAN: true
@@ -101,6 +120,6 @@ jobs:
           DO_SCA_SCAN: true
           DO_WAIT: true
           DO_CHECK_POLICY: true
-          DO_RELEASE_SUMMARY: false
+          DO_RELEASE_SUMMARY: true
           DO_PR_COMMENT: true
           DO_SAST_EXPORT: true
