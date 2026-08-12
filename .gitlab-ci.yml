@@ -109,13 +109,12 @@ fortify-ast-scan:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
         DO_PR_COMMENT: "true"
-        CHECK_POLICY_ACTION: fortify/check-pr-policy.yaml
-        CHECK_POLICY_EXTRA_OPTS: --on-unsigned=ignore --scan-types Static
     - if: $CI_COMMIT_BRANCH
       variables:
         DO_PR_COMMENT: "false"
   script: |
     unset SSC_URL SSC_APP_NAME SSC_APP_VERSION_NAME SSC_AUTH_TOKEN
+    #npx @fortify/setup@latest bootstrap-config --fcli-version=YOUR_CUSTOM_VERSION
     npx @fortify/setup@v2 env init --tools=fcli:bootstrapped
     npx @fortify/setup@v2 env gitlab --file="$GITLAB_ENV"
     source <(npx @fortify/setup env shell)
@@ -140,8 +139,6 @@ fortify-ast-scan:
     RELEASE_SUMMARY_EXTRA_OPTS: '-f release_summary.md'
     DO_CHECK_POLICY: true         # Set to true to check for policy violations and fail build if any are found
     DO_PR_COMMENT: true
-    PR_COMMENT_ACTION: fortify/gitlab-mr-comment.yaml  # GitLab MR comment action to use for reporting results in merge requests
-    PR_COMMENT_EXTRA_OPTS: --on-unsigned=ignore
     DO_EXPORT: true
 
 # This is a sample job to deploy the application. You can replace it with your actual deploy job.

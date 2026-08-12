@@ -91,6 +91,17 @@ public class UserService {
     }
 
     /**
+     * Lookup users by email domain.
+     */
+    public List<User> findUsersByEmailDomainInsecure(String domain) {
+        // INSECURE (intentional): vulnerable to SQL injection by concatenating untrusted domain input.
+        // Secure alternative: use a parameterized query (setParameter) or repository method with validated input.
+        String sql = "SELECT * FROM users WHERE email LIKE '%@" + domain + "'";
+        Query query = entityManager.createNativeQuery(sql, User.class);
+        return query.getResultList();
+    }
+
+    /**
      * Get database credentials - exposing sensitive data.
      */
     public String getDatabaseCredentials() {

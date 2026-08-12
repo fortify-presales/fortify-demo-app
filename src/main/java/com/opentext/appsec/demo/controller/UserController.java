@@ -51,6 +51,17 @@ public class UserController {
     }
 
     /**
+     * Lookup users by email domain with SQL injection vulnerability.
+     */
+    @Operation(summary = "Lookup users by email domain (insecure - demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
+    @GetMapping("/lookup-by-email-domain")
+    public List<User> lookupUsersByEmailDomain(@Parameter(description = "Email domain (unsanitized, demonstrates SQLi)") @RequestParam String domain) {
+        // INSECURE (intentional): passes untrusted input into SQL construction for scanner/policy demo purposes.
+        // Secure alternative: validate domain format and use parameterized queries.
+        return userService.findUsersByEmailDomainInsecure(domain);
+    }
+
+    /**
      * Find user by username with SQL injection vulnerability.
      */
     @Operation(summary = "Find user by username (insecure - demo)", security = {@io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "bearerAuth")})
