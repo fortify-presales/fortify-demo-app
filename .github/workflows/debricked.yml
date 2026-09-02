@@ -1,0 +1,14 @@
+name: Debricked SCA Scan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vulnerabilities-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: debricked/actions@v4
+        env:
+          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
