@@ -23,7 +23,7 @@ Optional:
 - MSAL.js (frontend) for Entra login and token handling
 - Spring Security (backend) as OAuth2 resource server with Entra JWT validation
 
-See [ENTRA_SETUP_GUIDE.md](ENTRA_SETUP_GUIDE.md) for information on how to setup Login Authentication using Microsoft Entra.
+See [ENTRA_SETUP_GUIDE.md](docs\ENTRA_SETUP_GUIDE.md) for information on how to setup Login Authentication using Microsoft Entra.
 
 ## Intentional Security Vulnerabilities
 
@@ -81,10 +81,24 @@ No input validation or sanitization
 
 ## Building the Application
 
+The SPA is **not** built by default, so backend-only work never pays the npm cost:
+
 ```bash
-# Linux/UNIX example
-./gradlew clean build
+# backend only - no npm involved
+./gradlew build
+
+# full artifact with the SPA embedded in the jar
+./gradlew build -PwithFrontend
 ```
+
+When `-PwithFrontend` is passed, the SPA tasks (`npmInstall` -> `buildFrontend` -> `copyFrontend`) are
+incremental: Gradle marks them `UP-TO-DATE` and skips npm unless something under `frontend/` actually
+changed. Generated assets are staged in `build/frontend-resources/static` and folded into the jar under
+`static/`; nothing is written back into `src/`. `npm ci` is used when a CI environment variable is
+present, `npm install` otherwise.
+
+For day-to-day frontend work, do not build the SPA through Gradle at all - use the Vite dev server
+described in [Developing the Application](#developing-the-application).
 
 ## Running the Application
 
@@ -174,21 +188,33 @@ Playwright is used for E2E testing of the frontend (React) application. These te
 
 ## Developing the Application
 
-If you wish to develop new features for the application you can start the backend and frontend up separately. To start the backend (without frontend):
+Run the two sides separately - this is the normal development loop and avoids rebuilding the SPA on
+every backend change.
+
+Terminal 1 (backend, no frontend build):
 
 ```
 # Linux/UNIX example
-./gradlew clean bootRun -PskipFrontend=true
+./gradlew bootRun
 ```
 
-Then to start the frontend:
+Terminal 2 (frontend with hot reload):
 
 ```
 cd frontend
 npm run dev
 ```
 
-Note: if you make changes to the frontend the vite server will automatically reload. However, for changes to the backend you will need to stop and start the backend.
+Then browse to `http://localhost:5173` - **not** 8080. The Vite dev server proxies every `/api/*`
+request to Spring Boot on port 8080 (see `frontend/vite.config.js`), so the browser sees a single
+origin and auth/cookies behave the same as in the packaged app.
+
+Notes:
+- Frontend edits hot-reload automatically; backend changes require restarting `bootRun`.
+- Plain `bootRun` serves no SPA of its own on port 8080. That is expected - use 5173. To exercise the
+  embedded single-artifact build, run `./gradlew bootRun -PwithFrontend`.
+- Backend-only work needs no frontend at all: use `http://localhost:8080/swagger-ui/index.html` or the
+  Postman collection in `fortify/`.
 
 ## API Endpoints
 

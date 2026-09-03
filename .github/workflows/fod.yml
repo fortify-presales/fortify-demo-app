@@ -63,7 +63,9 @@ jobs:
           FOD_CLIENT_SECRET: ${{secrets.FOD_CLIENT_SECRET}}
           DO_SETUP: true
           SETUP_EXTRA_OPTS: ${{ format('--sdlc-status Development --app-owner {0}', vars.FOD_DEFAULT_OWNER) }}
-          PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test"
+          # The build only needs to resolve the Java classpath; frontend sources are packaged from disk,
+          # so building the SPA would only add minified bundles to the scan.
+          PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test -PskipFrontend"
           SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE }}
           SAST_WAIT_EXTRA_OPTS: --timeout 3h
           DO_SAST_SCAN: true

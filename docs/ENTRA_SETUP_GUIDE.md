@@ -138,9 +138,9 @@ spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://login.microsoftonl
 
 **Backend:**
 ```bash
-./gradlew bootRun -PskipFrontend=true
+./gradlew bootRun
 # Windows alternative:
-.\gradlew.bat bootRun -PskipFrontend=true
+.\gradlew.bat bootRun
 ```
 
 **Frontend:**

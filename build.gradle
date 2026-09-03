@@ -14,17 +14,16 @@ repositories {
     mavenCentral()
 }
 
-// If the user invoked the `test` task, default to skipping frontend work
-def requestedTasks = gradle.startParameter.taskNames
-if (requestedTasks.any { it == 'test' || it == 'testClasses' || it == 'check' }) {
-    if (!project.hasProperty('skipFrontend')) {
-        ext.set('skipFrontend', 'true')
-        logger.lifecycle('Auto-setting skipFrontend=true because test task was requested')
-    }
-}
+// The SPA is NOT built by default: backend-only workflows (build, test, bootRun) must not pay the
+// npm cost. Opt in with -PwithFrontend when you need the SPA embedded in the jar.
+// -PskipFrontend remains supported as an explicit override for callers that still pass it.
+def frontendEnabled = project.hasProperty('withFrontend') && !project.hasProperty('skipFrontend')
 
 // Use `npm.cmd` on Windows so Gradle can start the process correctly
 def npmCmd = System.getProperty('os.name').toLowerCase().contains('windows') ? 'npm.cmd' : 'npm'
+
+// `npm ci` gives reproducible installs on CI; `npm install` is far faster for day-to-day local work
+def isCi = System.getenv('CI') != null || System.getenv('TF_BUILD') != null || System.getenv('GITHUB_ACTIONS') != null
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -55,41 +54,47 @@ test {
 }
 
 // Frontend build/copy tasks for embedded SPA (React + Vite)
-if (!project.hasProperty('skipFrontend')) {
-    // Frontend build/copy tasks for embedded SPA (React + Vite)
-    tasks.register('npmInstall') {
-        doLast {
-            exec {
-                workingDir "${projectDir}/frontend"
-                commandLine npmCmd, 'ci'
-            }
-        }
+if (frontendEnabled) {
+    def frontendDir = file("${projectDir}/frontend")
+
+    tasks.register('npmInstall', Exec) {
+        description = 'Installs frontend npm dependencies'
+        workingDir frontendDir
+        commandLine npmCmd, isCi ? 'ci' : 'install'
+
+        inputs.file("${frontendDir}/package.json")
+        inputs.file("${frontendDir}/package-lock.json")
+        // npm rewrites this marker on every successful install, so it is a cheap up-to-date signal
+        outputs.file("${frontendDir}/node_modules/.package-lock.json")
     }
 
-    tasks.register('buildFrontend') {
+    tasks.register('buildFrontend', Exec) {
+        description = 'Builds the React/Vite SPA into frontend/dist'
         dependsOn 'npmInstall'
-        doLast {
-            exec {
-                workingDir "${projectDir}/frontend"
-                commandLine npmCmd, 'run', 'build'
-            }
-        }
+        workingDir frontendDir
+        commandLine npmCmd, 'run', 'build'
+
+        inputs.dir("${frontendDir}/src")
+        inputs.dir("${frontendDir}/public")
+        inputs.file("${frontendDir}/index.html")
+        inputs.file("${frontendDir}/package.json")
+        inputs.file("${frontendDir}/package-lock.json")
+        inputs.file("${frontendDir}/vite.config.js")
+        inputs.file("${frontendDir}/tailwind.config.cjs")
+        inputs.file("${frontendDir}/postcss.config.cjs")
+        outputs.dir("${frontendDir}/dist")
+        outputs.cacheIf { true }
     }
 
-    tasks.register('copyFrontend', Copy) {
+    // Stage into build/ (not src/) so generated assets never pollute the source tree
+    def copyFrontend = tasks.register('copyFrontend', Copy) {
         dependsOn 'buildFrontend'
-        from file('frontend/dist')
-        into file('src/main/resources/static')
+        from frontendDir.toPath().resolve('dist').toFile()
+        into layout.buildDirectory.dir('frontend-resources/static')
     }
 
-    // Ensure the frontend is copied as part of a Gradle build
-    build.dependsOn 'copyFrontend'
-
-    // Declare explicit dependency so processResources runs after copyFrontend
-    // This avoids an implicit dependency warning/failure on CI (Gradle validation)
-    tasks.named('processResources') {
-        dependsOn 'copyFrontend'
-    }
+    // Passing the task provider lets Gradle wire the task dependency for processResources automatically
+    sourceSets.main.resources.srcDir(copyFrontend.map { layout.buildDirectory.dir('frontend-resources').get() })
 } else {
-    logger.lifecycle('Skipping frontend build/copy because -PskipFrontend is set')
+    logger.lifecycle('Frontend build skipped. Pass -PwithFrontend to embed the SPA in the jar.')
 }

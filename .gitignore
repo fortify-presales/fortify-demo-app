@@ -77,3 +77,4 @@ frontend/.env.local
 .env
 fortify.config
 aviator.token.txt
+**/*.sarif
