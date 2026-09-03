@@ -161,7 +161,7 @@ export default function Login({ onLogin, msalAvailable }) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center">
     <div className="card w-full max-w-md mx-4">
-      <h1 className="text-3xl font-bold text-center mt-2 mb-8 text-blue-700">Fortify Demo App</h1>
+      <h1 className="text-3xl font-bold text-center mt-2 mb-8 text-blue-700">Fortify Demo App: Payments Portal</h1>
       <h2 className="text-2xl font-semibold mb-4">Login</h2>
       
       {/* Entra SSO login button (shown if configured) */}

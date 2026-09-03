@@ -49,7 +49,7 @@ ARG VERSION=dev
 
 # OCI image labels - include useful metadata for registries and users
 # These are optional and can be overridden by build args / CI.
-LABEL org.opencontainers.image.title="Fortify Demo App"
+LABEL org.opencontainers.image.title="Fortify Demo App: Payments Portal"
 LABEL org.opencontainers.image.description="Demo app with intentionally insecure examples used for security training."
 LABEL org.opencontainers.image.url="https://github.com/opentext/fortify-demo-app"
 LABEL org.opencontainers.image.source="https://github.com/opentext/fortify-demo-app"

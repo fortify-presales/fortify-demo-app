@@ -1,0 +1,70 @@
+name: "Bug Report"
+description: Something in the demo harness is broken - build, run, scan, or test.
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For things that are broken **unintentionally**.
+
+        The application's security flaws are deliberate and are not bugs - see the
+        [vulnerability catalog](https://github.com/fortify-presales/fortify-demo-app/blob/main/docs/VULNERABILITY_CATALOG.md).
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it fail?
+      options:
+        - Gradle build
+        - Frontend build / Vite dev server
+        - Application startup or runtime
+        - Docker / docker compose
+        - CI workflow
+        - Fortify scan or fcli command
+        - Playwright tests
+        - Documentation is wrong or out of date
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs actual
+      placeholder: |
+        Expected:
+        Actual:
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Include the exact command. Note whether `-PwithFrontend` was used - it changes what gets built.
+      placeholder: |
+        1. ./gradlew bootRun
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output
+      description: Relevant error or stack trace. Rendered as a code block, no backticks needed.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: |
+        OS:
+        JDK:
+        Node:
+        Running via: gradlew bootRun / java -jar / docker compose
+    validations:
+      required: true

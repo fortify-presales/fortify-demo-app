@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Fortify Demo App API",
+    "name": "Fortify Demo : Payments Portal API",
     "_postman_id": "f3f9e2d2-0000-4f2a-9c9a-000000000000",
     "description": "Collection for testing the Fortify demo REST API. Uses collection variables and scripts to obtain and reuse a JWT.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"

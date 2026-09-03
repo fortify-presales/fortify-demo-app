@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: ⚠️ Do not report vulnerabilities in this app as security issues
+    url: https://github.com/fortify-presales/fortify-demo-app/blob/main/docs/VULNERABILITY_CATALOG.md
+    about: Every vulnerability in this repository is intentional. Check the catalog before filing - it is almost certainly already there and documented on purpose.
+  - name: Fortify documentation
+    url: https://www.microfocus.com/documentation/fortify-on-demand/
+    about: Questions about Fortify products themselves, rather than this demo app.

@@ -1,4 +1,4 @@
-# Fortify Demo App
+# Fortify Demo App: Payments Portal
 
 ## ⚠️ WARNING
 **This application contains intentional security vulnerabilities and should NEVER be deployed to production or exposed to the internet.**  
@@ -6,7 +6,7 @@ This is for educational and demonstration purposes only.
 
 ## Overview
 
-This is a simple Spring Boot application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as those provided by [OpenText Application Security](https://www.opentext.com/products/application-security).
+This is a simple Spring Boot application that demonstrates various security vulnerabilities that can be detected by application security testing tools such as those provided by [Fortify ](https://www.opentext.com/products/application-security).
 
 ## Technologies Used
 
@@ -27,57 +27,18 @@ See [ENTRA_SETUP_GUIDE.md](docs\ENTRA_SETUP_GUIDE.md) for information on how to 
 
 ## Intentional Security Vulnerabilities
 
-This application includes the following intentional security vulnerabilities:
+The application deliberately contains SQL injection, path traversal, command injection, XSS, hardcoded
+secrets, weak cryptography, information disclosure, insecure authentication, plaintext cardholder data,
+broken object-level authorization and an Entra token-validation downgrade.
 
-### 1. SQL Injection
-- Unparameterized SQL queries in `UserService`
-- Direct concatenation of user input in SQL statements
+See **[VULNERABILITY_CATALOG.md](docs/VULNERABILITY_CATALOG.md)** for the full catalog: each issue with
+its CWE, exact location, affected endpoints, a secure alternative, and which tool class (SAST, SCA, DAST
+or Fortify Agentic Analyzer) is expected to detect it.
 
-### 2. Path Traversal
-- File operations without path validation in `FileService`
-- Allows reading/writing arbitrary files on the system
+Two issues have dedicated demo write-ups:
 
-### 3. Command Injection
-- Direct execution of user-supplied commands in `FileService`
-No input validation or sanitization
-
-### 4. Cross-Site Scripting (XSS)
-- Unescaped user input reflected in HTML responses
-- No output encoding in `UserController`
-
-### 5. Hardcoded Credentials/Secrets
-- Hardcoded API keys in source code
-- Hardcoded database credentials in `application.properties`
-- Exposed secrets in configuration files
-
-### 6. Weak Cryptography
-- Use of MD5 for password hashing (cryptographically broken)
-- Plain text password storage
-
-### 7. Information Disclosure
-- Exposure of stack traces to users
-- Sensitive credentials exposed via API endpoints
-- Database credentials accessible through debug endpoints
-
-### 8. Insecure Authentication
-- Weak password validation
-- Plain text password comparison
-- Password echoed back in login response
-
-### 9. Insecure Payment Handling
-- Storing full payment card PAN and CVV in plain text (`Payment` entity) - PCI/PII violation (INSECURE, demo only)
-- Debug endpoints that return or log raw card numbers (`/api/payments/debug/rawcards`) — information disclosure
-- No input validation or sanitization on payment inputs (allows malformed/attacker-controlled values)
-- Missing access controls and audit for payment operations (debug endpoints expose sensitive data even with minimal auth)
-- No encryption or tokenization for payment data at rest or in transit beyond default TLS (demo lacks proper PCI controls)
-
-### 10. Insecure Entra / OAuth Token Handling
-- Relaxed issuer validation fallback for Entra token exchange (accepts signature-valid token even when issuer claim mismatches) - INSECURE demo behavior
-- Token exchange endpoint accepts externally obtained Entra access tokens and converts them to local demo JWTs with minimal claim hardening
-- Frontend may fall back from custom API scope to `User.Read` when consent is unavailable, weakening intended API audience restrictions
-- Auth artifacts are cached in browser localStorage, increasing exposure if XSS is present
-- Audience (`aud`) and Authorized Party (`azp`) claims are not validated in token exchange
-- Backend disables CSRF protection for authentication flows
+- [FAA_BOLA_USE_CASE.md](docs/FAA_BOLA_USE_CASE.md) - broken object-level authorization
+- [FAA_ENTRA_ISSUER_VALIDATION_USE_CASE.md](docs/FAA_ENTRA_ISSUER_VALIDATION_USE_CASE.md) - Entra issuer validation downgrade
 
 ## Building the Application
 
@@ -327,7 +288,7 @@ Notes:
 - The `Auth - Login` request uses the seeded `admin` / `admin123` credentials and stores the JWT in a collection variable named `token`.
 - Subsequent requests use the header `Authorization: Bearer {{token}}`.
 
-## Testing with OpenText Application Security (Fortify)
+## Testing with Fortify
 
 This application is designed to be scanned with OpenText Application Security's SAST, SCA and DAST engines as well as AI remediation using Aviator.
 
@@ -342,22 +303,6 @@ Note: the Login macro above sets the Logout condition URL to the custom logout e
 [URI]/api/users/logout
 ```
 This tells the scanner the application logout location so it can detect end-of-session events.
-
-### Expected Findings
-
-The security scan should identify:
-- Multiple SQL Injection vulnerabilities
-- Path Traversal vulnerabilities
-- Command Injection vulnerabilities
-- Cross-Site Scripting (XSS) vulnerabilities
-- Hardcoded credentials and API keys
-- Weak cryptographic algorithms
-- Information disclosure issues
-- Insecure authentication mechanisms
-- Insecure storage and exposure of payment card data (plain-text PAN/CVV) — PCI/PII issues
-- Endpoints that deliberately log or reflect sensitive payment data (information disclosure)
-- OAuth / OpenID Connect token validation weaknesses in the Entra integration
-- Weak claim validation and insecure token exchange behavior in the Entra login flow
 
 ## License
 

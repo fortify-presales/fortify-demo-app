@@ -1,0 +1,130 @@
+name: "Insecure Example"
+description: Propose a new intentional vulnerability, or a change to an existing one.
+title: "[INSECURE] "
+labels: ["insecure-demo", "security-demo"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for anything that adds or changes deliberately vulnerable code.
+
+        Before filing, check the [vulnerability catalog](https://github.com/fortify-presales/fortify-demo-app/blob/main/docs/VULNERABILITY_CATALOG.md)
+        to confirm the pattern is not already demonstrated.
+
+  - type: input
+    id: summary
+    attributes:
+      label: Vulnerability
+      description: One line - what insecure behaviour is being added?
+      placeholder: XXE via unguarded DocumentBuilderFactory in a new import endpoint
+    validations:
+      required: true
+
+  - type: input
+    id: cwe
+    attributes:
+      label: CWE
+      description: The primary CWE this demonstrates.
+      placeholder: CWE-611 (Improper Restriction of XML External Entity Reference)
+    validations:
+      required: true
+
+  - type: textarea
+    id: learning-objective
+    attributes:
+      label: Learning objective
+      description: |
+        What should someone watching a demo, or working through this as an exercise, take away?
+        This is the main justification for adding the example - if it duplicates an existing lesson, say why the variation matters.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: detection
+    attributes:
+      label: Expected detection
+      description: |
+        Which tool classes should find this? Select all that apply.
+        These map to the coverage columns in the vulnerability catalog.
+      multiple: true
+      options:
+        - SAST (static analysis of source)
+        - SCA (third-party dependency advisories)
+        - DAST (black-box HTTP probing of the running app)
+        - FAA (Fortify Agentic Analyzer - cross-file reasoning)
+    validations:
+      required: true
+
+  - type: textarea
+    id: detection-rationale
+    attributes:
+      label: Why those tools, and why not the others
+      description: |
+        Especially valuable when a tool class is expected to *miss* it.
+        An example that only FAA can find is worth more than another SQL injection.
+      placeholder: |
+        SAST: no single line is wrong - the flaw is a missing ownership check.
+        DAST: would need two authenticated identities to spot the difference.
+    validations:
+      required: true
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Files and endpoints
+      description: Where will this live, and what HTTP surface (if any) does it expose?
+      placeholder: |
+        src/main/java/com/opentext/appsec/demo/service/ImportService.java
+        POST /api/import/xml  (authenticated)
+    validations:
+      required: true
+
+  - type: textarea
+    id: secure-alternative
+    attributes:
+      label: Secure alternative
+      description: The remediation note that will accompany the code. Required - every example must teach the fix.
+      placeholder: Disable external entity resolution via XMLConstants.FEATURE_SECURE_PROCESSING.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Components affected
+      multiple: true
+      options:
+        - Backend (Spring Boot)
+        - Frontend (React SPA)
+        - Configuration (application.properties)
+        - Build (Gradle / npm)
+        - Container (Dockerfile / compose)
+        - CI workflows
+        - Demo assets (Postman / webmacro / HAR)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: conventions
+    attributes:
+      label: Repository conventions
+      description: See [copilot-instructions.md](https://github.com/fortify-presales/fortify-demo-app/blob/main/.github/copilot-instructions.md).
+      options:
+        - label: Code will carry an `INSECURE (intentional)` comment with a short remediation note
+          required: true
+        - label: A row will be added to `docs/VULNERABILITY_CATALOG.md` with the detection coverage above
+          required: true
+        - label: Any credentials, keys or card numbers used are obviously fake test values
+          required: true
+        - label: This does not add real user data, production secrets, or anything harmful beyond the demo scope
+          required: true
+
+  - type: textarea
+    id: demo-notes
+    attributes:
+      label: Demo / exercise notes
+      description: Optional. Reproduction steps, a curl command, or a scan configuration needed to surface it.
+      placeholder: |
+        Requires an authenticated DAST scan seeded with /v3/api-docs - not linked from the SPA.
+    validations:
+      required: false

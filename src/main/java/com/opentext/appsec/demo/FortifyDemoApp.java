@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Main application class for Fortify Demo App.
+ * Main application class for Fortify Demo App: Payments Portal.
  * This application intentionally contains security vulnerabilities for demonstration purposes.
  */
 @SpringBootApplication

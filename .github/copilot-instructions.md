@@ -61,6 +61,25 @@ Scanning and test guidance
 
 - This repository is intended to be scanned by automated tools. If you run Fortify or other scanners locally, treat findings that are annotated `INSECURE (intentional)` as expected learning cases.
 - When adding new insecure examples for exercises or tests, include a short test case or a README note explaining the learning objective.
+- Every intentional vulnerability is catalogued in [docs/VULNERABILITY_CATALOG.md](../docs/VULNERABILITY_CATALOG.md), together with the tool class (SAST, SCA, DAST or Fortify Agentic Analyzer) expected to detect it. Add a row there whenever you add an example, and keep it accurate when you change one.
+
+AI agent guidance: change review
+--------------------------------
+
+**Do not run `fortify-change-review` when adding or modifying intentionally insecure code.** The
+vulnerabilities in `src/`, `frontend/src/` and `src/main/resources/application.properties` are deliberate
+and already documented in the vulnerability catalog. Reviewing them produces noise on every change and
+risks "fixing" the very patterns this repository exists to demonstrate.
+
+Do run it — or offer to — when:
+
+- The user explicitly asks for a security review.
+- The change touches the demo harness rather than the demo content, where a flaw would be *unintentional*:
+  build scripts, CI/CD workflows, container definitions, or the scripts under `fortify/`. A leaked token
+  in a workflow file or an insecure container base image is a genuine problem, not a teaching example.
+
+When you do surface a finding on intentionally insecure code, state that it appears deliberate and cite
+the catalog entry rather than proposing a fix.
 
 Contributing
 ------------

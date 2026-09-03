@@ -24,7 +24,7 @@ public class OpenApiConfig {
             .info(new Info()
                 .title("Fortify Demo API")
                 .version("1.0.0")
-                .description("OpenAPI docs for the Fortify Demo application. Endpoints are intentionally insecure for testing."));
+                .description("OpenAPI docs for the Fortify Demo App: Payments Portal. Endpoints are intentionally insecure for testing."));
     }
 
     // No OpenApiCustomiser here — keep security annotations as-is in code.

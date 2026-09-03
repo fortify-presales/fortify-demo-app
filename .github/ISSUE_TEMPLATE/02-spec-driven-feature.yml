@@ -1,0 +1,130 @@
+name: "Spec-Driven Feature"
+description: Specify a change to the demo harness - app functionality, tooling, CI, or documentation.
+title: "[SPEC] "
+labels: ["specification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For work on the demo *harness* rather than the planted vulnerabilities.
+        Adding or changing intentionally insecure code? Use the **Insecure Example** template instead.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Application feature (new endpoint, screen, or flow)
+        - Fortify integration (FoD / SSC / ScanCentral / fcli)
+        - CI-CD workflow (GitHub Actions, GitLab, Azure DevOps)
+        - Build or developer experience
+        - Demo assets (Postman collection, webmacro, HAR, use-case doc)
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: |
+        What problem does this solve, and what does success look like?
+        Frame it in demo/training terms - who is watching, and what should they be able to do afterwards?
+      placeholder: |
+        Problem:
+        Expected outcome:
+        Success criteria:
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Functional requirements
+      description: Numbered and testable. Mark each Must / Should / Could.
+      placeholder: |
+        FR-001 (Must) - ...
+        FR-002 (Should) - ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: components
+    attributes:
+      label: Components impacted
+      multiple: true
+      options:
+        - Backend (Spring Boot)
+        - Frontend (React SPA)
+        - Database / seed data
+        - Build (Gradle / npm)
+        - Container (Dockerfile / compose)
+        - CI workflows
+        - Fortify configuration
+        - Documentation
+    validations:
+      required: true
+
+  - type: textarea
+    id: security-impact
+    attributes:
+      label: Effect on the intentional vulnerabilities
+      description: |
+        Required. This repository's value depends on its planted flaws staying findable.
+        Does this change hide, remove, or accidentally fix any catalogued issue? Does it add an unintended one?
+        Answer "none" if genuinely not applicable.
+      placeholder: |
+        Adds a new authenticated endpoint. Does not alter any catalogued issue.
+        Note: must not introduce output encoding on /api/users/welcome - that would mask issue 4.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Gherkin preferred.
+      placeholder: |
+        AC-001
+        Given ...
+        When ...
+        Then ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: edge-cases
+    attributes:
+      label: Edge cases
+      description: Optional. Invalid input, missing permissions, service unavailable, and so on.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Testing required
+      options:
+        - label: Unit tests (`./gradlew test`)
+        - label: Playwright end-to-end (`frontend/tests/`)
+        - label: A scan run (SAST / SCA / DAST) to confirm expected findings are unchanged
+        - label: Manual verification only
+
+  - type: textarea
+    id: agent-context
+    attributes:
+      label: Context for Copilot / coding agent
+      description: Optional. Constraints, files expected to change, or prior art to follow.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: dod
+    attributes:
+      label: Definition of done
+      options:
+        - label: Acceptance criteria satisfied
+        - label: Tests passing
+        - label: Documentation updated (README / docs/)
+        - label: Vulnerability catalog still accurate
+        - label: Pull request approved

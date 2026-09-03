@@ -1,6 +1,6 @@
 # Microsoft Entra SSO Setup Guide
 
-This guide explains how to add Microsoft Entra ID (formerly Azure AD) single sign-on to the Fortify Demo App.
+This guide explains how to add Microsoft Entra ID (formerly Azure AD) single sign-on to the Fortify Demo App: Payments Portal.
 
 ## Prerequisites
 
@@ -78,10 +78,10 @@ Notes:
    - Or set custom: `api://fortify-demo-backend`
 4. Create scope:
    - **Scope name**: `access_as_user`
-   - **Admin consent display name**: `Access Fortify Demo App`
-   - **Admin consent description**: `Allows access to the Fortify Demo App API`
-   - **User consent display name**: `Access Fortify Demo App`
-   - **User consent description**: `Allows access to the Fortify Demo App API`
+   - **Admin consent display name**: `Access Fortify Demo App: Payments Portal`
+   - **Admin consent description**: `Allows access to the Fortify Demo App: Payments Portal API`
+   - **User consent display name**: `Access Fortify Demo App: Payments Portal`
+   - **User consent description**: `Allows access to the Fortify Demo App: Payments Portal API`
 5. Click **Add scope**
 6. Copy the full scope: `api://fortify-demo-backend/access_as_user`
 
