@@ -51,10 +51,10 @@ ARG VERSION=dev
 # These are optional and can be overridden by build args / CI.
 LABEL org.opencontainers.image.title="Fortify Demo App: Payments Portal"
 LABEL org.opencontainers.image.description="Demo app with intentionally insecure examples used for security training."
-LABEL org.opencontainers.image.url="https://github.com/opentext/fortify-demo-app"
-LABEL org.opencontainers.image.source="https://github.com/opentext/fortify-demo-app"
-LABEL org.opencontainers.image.licenses="MIT"
-LABEL org.opencontainers.image.authors="OpenText Presales Team"
+LABEL org.opencontainers.image.url="https://github.com/fortify-presales/fortify-demo-app"
+LABEL org.opencontainers.image.source="https://github.com/fortify-presales/fortify-demo-app"
+LABEL org.opencontainers.image.licenses="GNU General Public License v3.0"
+LABEL org.opencontainers.image.authors="Fortify Presales Team"
 LABEL org.opencontainers.image.version=${VERSION}
 LABEL org.opencontainers.image.created=${BUILD_DATE}
 LABEL org.opencontainers.image.revision=${VCS_REF}
