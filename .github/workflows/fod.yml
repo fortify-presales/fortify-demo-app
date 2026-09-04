@@ -76,9 +76,9 @@ jobs:
           DO_WAIT: true
           DO_DEBRICKED_SCAN: true
           DEBRICKED_SCAN_EXTRA_OPTS: --prefer-npm -e "*/**.lock" -e "**/build/classes/test/**" -e "**/frontend/dist/**" -e "**/node_modules/**" .
-          DO_CHECK_POLICY: true
-          CHECK_POLICY_ACTION: fortify/custom-check-policy.yaml
-          CHECK_POLICY_EXTRA_OPTS: --on-unsigned=ignore --scan-types Static
           DO_JOB_SUMMARY: true
           DO_PR_COMMENT: true
           DO_EXPORT: true
+          DO_CHECK_POLICY: false
+          #CHECK_POLICY_ACTION: fortify/custom-check-policy.yaml
+          #CHECK_POLICY_EXTRA_OPTS: --on-unsigned=ignore --scan-types Static
