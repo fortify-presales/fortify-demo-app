@@ -16,6 +16,8 @@ fortifyaa -selftest
 
 fortifyaa -scan . --scope src --fod-release "fortify-presales/fortify-demo-app:main" --output fortify-demo-app.faa.sarif --message-format fod -clean
 
+fortifyaa -scan . --scope src --fod-release "fortify-presales/fortify-demo-app:main" --baseline fortify-demo-app.faa.sarif --incremental HEAD~1 --output fortify-demo-app.faa-incremental.sarif --message-format fod
+
 fcli fod sast-scan import-sarif --release "fortify-presales/fortify-demo-app:faa-main" -f fortify-demo-app.faa.sarif
 
 fcli fod session logout
