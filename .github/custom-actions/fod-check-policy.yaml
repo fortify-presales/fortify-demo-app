@@ -19,13 +19,13 @@ cli.options:
     description: "Required release id or <appName>:[<microserviceName>:]<releaseName>"
   scan-types:
     names: --scan-types, --scan-type
-    description: Scan types to include in the policy check. Default Static, Dynamic, Open Source, Mobile.
+    description: Scan types to include in the policy check. Default Static, Dynamic, OpenSource, Mobile.
     type: array
     required: false
     default:
       - Static
       - Dynamic
-      - Open Source
+      - OpenSource
       - Mobile
   
 steps:
@@ -33,7 +33,7 @@ steps:
       rel: ${#fod.release(cli.release)}
       checkStatic: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('static')}
       checkDynamic: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('dynamic')}
-      checkOpenSource: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('open source')}
+      checkOpenSource: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('opensource')}
       checkMobile: ${cli['scan-types']==null || cli['scan-types'].toString().toLowerCase().contains('mobile')}
   - if: ${checkStatic}
     rest.call:
@@ -71,7 +71,7 @@ steps:
           includeFixed: true
         records.for-each:
           record.var-name: issue
-          if: ${issue.scantype=='Open Source' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
+          if: ${issue.scantype=='OpenSource' && issue.status=='New' && (issue.severityString=='Critical' || issue.severityString=='High')}
           do:
             - var.set:
                 blockingIssuesOpenSource..: "Open Source ${issue.status} ${issue.severityString} - ${issue.category} (${issue.primaryLocationFull}${issue.lineNumber==null?'':':'+issue.lineNumber})"

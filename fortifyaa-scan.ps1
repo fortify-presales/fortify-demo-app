@@ -7,13 +7,16 @@
 # Password:     4uu_SP6m 
 
 # Remove any conflicting FCLI_DEFAULT_SSC_* environment variables so that FoD is used for Fortify Agentic Analyzer 
-Get-ChildItem Env: | Where-Object Name -like "FCLI_DEFAULT_SSC_*" | ForEach-Object { Remove-Item "Env:$($_.Name)" }
+#Get-ChildItem Env: | Where-Object Name -like "FCLI_DEFAULT_SSC_*" | ForEach-Object { Remove-Item "Env:$($_.Name)" }
 
 fcli fod session login
 
+fortifyaa -pilogin
+fortifyaa -selftest
+
 fortifyaa -scan . --scope src --fod-release "fortify-presales/fortify-demo-app:main" --output fortify-demo-app.faa.sarif --message-format fod -clean
 
-fcli fod sast-scan import-sarif --release "fortify-presales/fortify-demo-app:main" -f fortify-demo-app.faa.sarif
+fcli fod sast-scan import-sarif --release "fortify-presales/fortify-demo-app:faa-main" -f fortify-demo-app.faa.sarif
 
 fcli fod session logout
 
