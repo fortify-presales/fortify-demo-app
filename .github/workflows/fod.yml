@@ -69,12 +69,13 @@ jobs:
           SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE }}
           SAST_WAIT_EXTRA_OPTS: --timeout 3h
           DO_SAST_SCAN: false
-          DO_SCA_SCAN: false # We are doing dedicated Fortify SCA scan
+          #DO_SCA_SCAN: false # We are doing dedicated Fortify SCA scan
           DO_AVIATOR_AUDIT: true
           #DO_AVIATOR_REMEDIATIONS: true
           COPY_FROM_RELEASE: "${{ github.event.repository.name }}:${{ github.event.repository.default_branch }}"
           DO_WAIT: true
           DO_DEBRICKED_SCAN: true
+          DEBRICKED_ACCESS_TOKEN: ${{secrets.DEBRICKED_TOKEN}}
           DEBRICKED_SCAN_EXTRA_OPTS: --prefer-npm -e "*/**.lock" -e "**/build/classes/test/**" -e "**/frontend/dist/**" -e "**/node_modules/**" .
           DO_JOB_SUMMARY: true
           DO_PR_COMMENT: true
