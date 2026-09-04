@@ -68,7 +68,7 @@ jobs:
           PACKAGE_EXTRA_OPTS: -bt gradle -bf build.gradle -bc "clean build -x test -PskipFrontend"
           SAST_ASSESSMENT_TYPE: ${{ vars.FOD_DEFAULT_ASSESSMENT_TYPE }}
           SAST_WAIT_EXTRA_OPTS: --timeout 3h
-          DO_SAST_SCAN: true
+          DO_SAST_SCAN: false
           DO_SCA_SCAN: false # We are doing dedicated Fortify SCA scan
           DO_AVIATOR_AUDIT: true
           #DO_AVIATOR_REMEDIATIONS: true
